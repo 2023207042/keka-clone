@@ -1,73 +1,128 @@
-# React + TypeScript + Vite
+# React Premium Component Boilerplate
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A production-ready, highly scalable React component library boilerplate built with **Tailwind CSS v4**, **TypeScript**, and **Class Variance Authority (CVA)**.
 
-Currently, two official plugins are available:
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)
+![Tailwind](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## React Compiler
+- **Headless Architecture**: Logic and styling separated using `cva` and `radix-ui` patterns.
+- **Pure CSS Theming**: Zero-runtime CSS-in-JS. All themes utilize native CSS variables (`var(--color-primary-500)`).
+- **Tailwind CSS v4**: Bleeding edge utility-first styling with `@theme` blocks.
+- **Dark Mode Support**: Built-in support for light/dark modes via data attributes.
+- **Fully Typed**: Written in TypeScript with strict mode enabled.
+- **No Bloat**: Zero unnecessary dependencies. Just React, Lucide-React (Icons), and utilities.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Installation
 
-## Expanding the ESLint configuration
+1.  **Clone the repository**
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+    ```bash
+    git clone https://github.com/2023207042/react-boiler-plate.git
+    cd react-boiler-plate
+    ```
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+2.  **Install dependencies**
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+    ```bash
+    npm install
+    # or
+    yarn install
+    # or
+    pnpm install
+    ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+3.  **Start the development server**
+    ```bash
+    npm run dev
+    ```
+
+## 🎨 Theming System
+
+This project uses a robust, variable-based theming system located in `src/styles/`.
+
+### Structure
+
+```
+src/styles/
+├── base.css          # Reset and global standard styles
+├── index.css         # Main entry point, imports themes
+└── themes/
+    ├── default.css   # Light theme (CSS variables)
+    └── dark.css      # Dark theme overrides
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Customizing Colors
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+To change the primary brand color, open `src/styles/themes/default.css` and modify the HSLA/Hex mapped variables:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```css
+:root {
+  /* Change Brand Color */
+  --color-primary-500: #3b82f6; /* Blue-500 */
+  --color-primary-600: #2563eb; /* Blue-600 */
+}
 ```
+
+## 📦 Components
+
+The library includes a comprehensive suite of components refactored for consistency:
+
+### Form Elements
+
+- **`RNButton`**: Variants (solid, outline, ghost), Loading state, Icons.
+- **`RNInput`**: Floating labels, error states, password toggle.
+- **`RNSelect`**: Native select with premium styling.
+- **`RNSwitch`**: iOS-style toggle switch.
+- **`RNTextarea`**: Auto-styled text area.
+- **`RNBatchInput`**: Tags/Chips input with sorting.
+
+### Data Display
+
+- **`RNTable`**: **Advanced**. Supports client/server pagination, sorting, and generic columns.
+- **`RNCard`**: Elevated, outlined, or flat cards.
+- **`RNBadge`**: Status indicators (Success, Warning, Error).
+- **`RNTag`**: Categorization tags.
+- **`RNAvatar`**: User profile images with fallbacks.
+- **`RNAccordion`**: Collapsible content sections.
+- **`RNTabs`**: Tabbed interface navigation.
+
+### Feedback & Overlays
+
+- **`RNModal`**: Accessible dialogs with backdrop blur.
+- **`RNAlert`**: Contextual alerts (Success, Info, Warning, Error).
+- **`RNToast`**: Non-blocking notifications.
+- **`RNTooltip`**: Hover-triggered helper text.
+
+### Layout & Utils
+
+- **`RNNavbar`**: Responsive navigation bar.
+- **`RNContainer`**: Responsive constraints.
+- **`RNBreadCrumb`**: Page hierarchy navigation.
+
+## 💻 Usage Example
+
+```tsx
+import { RNButton } from "@/components/RNButton";
+import { RNInput } from "@/components/RNInput";
+import { RNCard } from "@/components/RNCard";
+
+function LoginForm() {
+  return (
+    <RNCard className="max-w-md mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-4">Login</h1>
+      <div className="space-y-4">
+        <RNInput label="Email" placeholder="you@example.com" />
+        <RNInput label="Password" type="password" />
+        <RNButton fullWidth>Sign In</RNButton>
+      </div>
+    </RNCard>
+  );
+}
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

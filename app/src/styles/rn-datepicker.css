@@ -1,0 +1,62 @@
+/* Custom overrides for react-day-picker to match our Tailwind variables */
+.rdp {
+  --rdp-cell-size: 40px;
+  --rdp-accent-color: var(--color-primary-600);
+  --rdp-background-color: var(--color-surface-100);
+  margin: 0;
+}
+
+.rdp-button:hover:not([disabled]):not(.rdp-day_selected):not(
+    [aria-selected="true"]
+  ) {
+  background-color: var(--color-surface-100);
+  color: var(--text-primary);
+}
+
+.rdp-day_selected,
+.rdp-day_selected:focus-visible,
+.rdp-day_selected:hover {
+  background-color: var(--color-primary-600);
+  color: #ffffff;
+}
+
+.rdp-caption_label {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.rdp-nav_button {
+  color: var(--text-secondary);
+}
+
+/* Specific overrides for RNDateRangePicker specificities */
+
+/* 1. Base Day Button Hover - Silver */
+/* Only apply when NOT selected and NOT disabled */
+.rn-day-button:hover:not([disabled]):not(.rn-selected):not(
+    [aria-selected="true"]
+  ) {
+  background-color: var(--color-surface-100) !important;
+}
+
+/* 2. Generic Selected Hover - Dark Blue */
+/* Applies to single dates and range start/ends by default */
+.rn-selected:hover {
+  background-color: var(--color-primary-600) !important;
+  color: #ffffff !important;
+}
+
+/* 3. Range Middle Hover - Light Blue */
+/* Must come AFTER .rn-selected to override it for the middle part */
+.rn-range-middle:hover {
+  background-color: var(--color-primary-200) !important;
+  color: var(--color-primary-900) !important;
+}
+
+/* 4. Range Start/End Hover - Darker Blue */
+/* Must come AFTER .rn-range-middle to override if they overlap (rare but ensures caps are dark) */
+.rn-range-start:hover,
+.rn-range-end:hover {
+  background-color: var(--color-primary-700) !important;
+  color: #ffffff !important;
+}

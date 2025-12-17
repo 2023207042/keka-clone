@@ -1,0 +1,32 @@
+@layer base {
+  /* Dark Theme Overrides */
+  [data-theme="dark"] {
+    --bg-app: #0f172a;
+    --bg-card: #1e293b;
+    --color-surface-0: #1e293b;
+
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+
+    --border-default: #334155;
+    --border-active: #60a5fa;
+
+    /* Adjust specific surface colors if needed here */
+  }
+
+  /* Auto-detect OS preference */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg-app: #0f172a;
+      --bg-card: #1e293b;
+
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+
+      --border-default: #334155;
+      --border-active: #60a5fa;
+    }
+  }
+}
