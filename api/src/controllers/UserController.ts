@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Route, SuccessResponse } from "tsoa";
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Route,
+  SuccessResponse,
+  Path,
+} from "tsoa";
 import { User } from "../models/User";
 import { LeaveBalance } from "../models/LeaveBalance";
 import bcrypt from "bcrypt";
@@ -91,5 +100,17 @@ export class UserController extends Controller {
       inviteLink,
       status: "Invited",
     } as any;
+  }
+
+  @Delete("{id}")
+  @SuccessResponse("200", "Deleted")
+  public async deleteUser(@Path() id: number): Promise<void> {
+    const user = await User.findByPk(id);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    // Optional: Check if user is the last admin or trying to delete self?
+    // For now, simple delete.
+    await user.destroy();
   }
 }

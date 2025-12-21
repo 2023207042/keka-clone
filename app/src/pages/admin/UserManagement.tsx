@@ -123,9 +123,24 @@ function UserManagement() {
             <RNButton variant="outline" className="h-8 text-xs" onClick={() => openBalanceModal(row)}>
                 <Edit className="w-3 h-3 mr-1" /> Balance
             </RNButton>
+            <RNButton variant="destructive" className="h-8 text-xs" onClick={() => handleDelete(row)}>
+                 Delete
+            </RNButton>
         </div>
     )}
   ];
+
+  const handleDelete = async (user: any) => {
+    if (!confirm(`Are you sure you want to delete ${user.name}? This action cannot be undone.`)) return;
+
+    try {
+        await api.delete(`/users/${user.id}`);
+        setMsg({ type: 'success', text: 'User deleted successfully' });
+        fetchUsers();
+    } catch (err: any) {
+        setMsg({ type: 'error', text: err.response?.data?.message || 'Failed to delete user' });
+    }
+  };
 
   return (
     <div className="p-8 space-y-8 relative">

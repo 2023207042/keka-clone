@@ -9,6 +9,8 @@ import {
 } from "tsoa";
 import { Leave } from "../models/Leave";
 import { LeaveBalance } from "../models/LeaveBalance";
+import { User } from "../models/User";
+import { emailService } from "../services/EmailService";
 
 interface ApplyLeaveParams {
   userId: number;
@@ -53,7 +55,7 @@ export class LeaveController extends Controller {
     });
 
     // Explicitly map to response
-    return {
+    const response: LeaveResponse = {
       id: leave.id,
       userId: leave.userId,
       type: leave.type,
@@ -62,6 +64,31 @@ export class LeaveController extends Controller {
       reason: leave.reason,
       status: leave.status,
     };
+
+    // Notify Admins
+    try {
+      const admins = await User.findAll({ where: { role: "Admin" } });
+      const adminEmails = admins
+        .map((u) => u.email)
+        .filter((e) => e) as string[];
+      const requester = await User.findByPk(body.userId);
+
+      if (adminEmails.length > 0 && requester) {
+        // Format dates
+        const dateRange = `${start.toLocaleDateString()} to ${end.toLocaleDateString()}`;
+        emailService.sendLeaveRequestNotification(
+          adminEmails,
+          requester.name || "Employee",
+          body.type,
+          dateRange,
+          body.reason
+        );
+      }
+    } catch (err) {
+      console.error("Failed to send admin notification email", err);
+    }
+
+    return response;
   }
 
   @Get("my-leaves")
@@ -120,6 +147,26 @@ export class LeaveController extends Controller {
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
       await this.deductBalance(leave.userId, leave.type, diffDays);
+    }
+
+    // Notify User
+    try {
+      const user = await User.findByPk(leave.userId);
+      if (user && user.email) {
+        const dateRange = `${new Date(
+          leave.startDate
+        ).toLocaleDateString()} to ${new Date(
+          leave.endDate
+        ).toLocaleDateString()}`;
+        emailService.sendLeaveStatusUpdate(
+          user.email,
+          user.name || "User",
+          body.status,
+          dateRange
+        );
+      }
+    } catch (err) {
+      console.error("Failed to send status update email", err);
     }
   }
 

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { RNCard } from '@/components/RNCard';
-import { Users, UserCheck, UserX, Clock, ArrowRight } from 'lucide-react';
+import { RNTable } from '@/components/RNTable';
+import { RNBadge } from '@/components/RNBadge';
+import { Users, UserCheck, UserX, Clock, ArrowRight, Calendar, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '@/services/api';
 import { authService } from '@/services/auth';
@@ -22,8 +24,11 @@ function AdminDashboard() {
     onLeaveToday: 0
   });
 
+  const [todaySummary, setTodaySummary] = useState([]);
+
   useEffect(() => {
     fetchStats();
+    fetchTodaySummary();
   }, []);
 
   const fetchStats = async () => {
@@ -33,6 +38,15 @@ function AdminDashboard() {
     } catch (error) {
       console.error("Failed to fetch stats", error);
     }
+  };
+
+  const fetchTodaySummary = async () => {
+      try {
+          const { data } = await api.get('/attendance/today-summary');
+          setTodaySummary(data);
+      } catch (error) {
+          console.error("Failed to fetch today summary", error);
+      }
   };
 
   const statCards = [
@@ -123,6 +137,45 @@ function AdminDashboard() {
             </div>
           </RNCard>
         </Link>
+
+        <Link to="/admin/consolidated" className="block group">
+           <RNCard className="h-full hover:border-[var(--color-primary-300)] transition-colors group-hover:shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)] group-hover:text-[var(--color-primary-600)]">Consolidated Report</h3>
+                <p className="text-[var(--text-secondary)] text-sm mt-1">Monthly detailed view</p>
+              </div>
+              <Calendar className="w-5 h-5 text-[var(--text-tertiary)] group-hover:text-[var(--color-primary-500)]" />
+            </div>
+          </RNCard>
+        </Link>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">Today's Attendance Summary</h2>
+        <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
+           <RNTable 
+              data={todaySummary}
+              columns={[
+                  { header: 'Employee', accessorKey: 'name', cell: (row: any) => (
+                      <div>
+                          <div className="font-medium text-gray-900">{row.name}</div>
+                          <div className="text-xs text-gray-500">{row.email}</div>
+                      </div>
+                  )},
+                  { header: 'Status', accessorKey: 'status', cell: (row: any) => {
+                      let variant: any = 'default';
+                      if (row.status.includes('Present')) variant = 'success';
+                      else if (row.status === 'Absent' || row.status === 'Week Off') variant = 'destructive';
+                      else if (row.status.includes('Leave')) variant = 'warning';
+                      return <RNBadge variant={variant}>{row.status}</RNBadge>;
+                  }},
+                  { header: 'Clock In', accessorKey: 'clockIn', cell: (row: any) => <span className="text-xs font-mono">{row.clockIn}</span> },
+                  { header: 'Clock Out', accessorKey: 'clockOut', cell: (row: any) => <span className="text-xs font-mono">{row.clockOut}</span> },
+                  { header: 'Total Duration', accessorKey: 'duration', cell: (row: any) => <span className="font-medium">{row.duration}</span> },
+              ]}
+           />
+        </div>
       </div>
     </div>
   );

@@ -323,4 +323,232 @@ export class AttendanceController extends Controller {
       workFrom: log.workFrom,
     }));
   }
+
+  @Get("consolidated")
+  public async getConsolidatedReport(
+    @Query() userId: number,
+    @Query() month: number, // 1-12
+    @Query() year: number
+  ): Promise<any[]> {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0); // Last day of month
+
+    console.log(
+      `Generating Report for User: ${userId}, Range: ${startDate.toDateString()} to ${endDate.toDateString()}`
+    );
+
+    // Fetch all attendance for this range
+    const attendanceRecords = await Attendance.findAll({
+      where: {
+        userId,
+        date: {
+          [Op.between]: [
+            startDate.toLocaleDateString("en-CA"),
+            endDate.toLocaleDateString("en-CA"),
+          ],
+        },
+      },
+      order: [["clockIn", "ASC"]],
+    });
+
+    console.log(`Found ${attendanceRecords.length} attendance records.`);
+
+    // Fetch all approved leaves
+    const leaves = await Leave.findAll({
+      where: {
+        userId,
+        status: "Approved",
+        startDate: { [Op.lte]: endDate.toLocaleDateString("en-CA") },
+        endDate: { [Op.gte]: startDate.toLocaleDateString("en-CA") },
+      },
+    });
+
+    console.log(`Found ${leaves.length} approved leaves.`);
+
+    const report: any[] = [];
+    const todayStr = new Date().toLocaleDateString("en-CA");
+
+    // Loop through every day of the month
+    for (
+      let d = new Date(startDate);
+      d <= endDate;
+      d.setDate(d.getDate() + 1)
+    ) {
+      const dateStr = d.toLocaleDateString("en-CA"); // YYYY-MM-DD
+      const dayName = d.toLocaleDateString("en-US", { weekday: "long" });
+
+      // 1. Check for Attendance (Priority)
+      const dailyAtt = attendanceRecords.filter((a) => {
+        // Robust comparison: Convert both to YYYY-MM-DD string
+        const recordDate = new Date(a.date).toLocaleDateString("en-CA");
+        return recordDate === dateStr;
+      });
+
+      if (dailyAtt.length > 0) {
+        // Aggregate
+        const firstIn = dailyAtt[0].clockIn;
+        const lastOut = dailyAtt[dailyAtt.length - 1].clockOut;
+        const totalDuration = dailyAtt.reduce(
+          (acc, curr) => acc + (curr.duration || 0),
+          0
+        );
+
+        // Convert duration to Xh Ym
+        const h = Math.floor(totalDuration / 60);
+        const m = totalDuration % 60;
+        const durStr = `${h}h ${m}m`;
+
+        report.push({
+          date: dateStr,
+          day: dayName,
+          status: dailyAtt.some((a) => a.clockOut === null)
+            ? "Present (Running)"
+            : "Present",
+          duration: durStr,
+          clockIn: new Date(firstIn).toLocaleTimeString(),
+          clockOut: lastOut ? new Date(lastOut).toLocaleTimeString() : "-",
+        });
+        continue;
+      }
+
+      // 2. Check for Leave
+      const onLeave = leaves.find((l) => {
+        const s = new Date(l.startDate);
+        const e = new Date(l.endDate);
+        const current = new Date(dateStr);
+        return current >= s && current <= e;
+      });
+
+      if (onLeave) {
+        report.push({
+          date: dateStr,
+          day: dayName,
+          status: `Leave (${onLeave.type})`,
+          duration: "-",
+          clockIn: "-",
+          clockOut: "-",
+        });
+        continue;
+      }
+
+      // 3. Check for Sunday
+      if (d.getDay() === 0) {
+        report.push({
+          date: dateStr,
+          day: dayName,
+          status: "Week Off",
+          duration: "-",
+          clockIn: "-",
+          clockOut: "-",
+        });
+        continue;
+      }
+
+      // 4. Absent or Future
+      if (dateStr < todayStr) {
+        report.push({
+          date: dateStr,
+          day: dayName,
+          status: "Absent",
+          duration: "0h 0m",
+          clockIn: "-",
+          clockOut: "-",
+        });
+      } else {
+        report.push({
+          date: dateStr,
+          day: dayName,
+          status: "-",
+          duration: "-",
+          clockIn: "-",
+          clockOut: "-",
+        });
+      }
+    }
+
+    return report;
+  }
+
+  @Get("today-summary")
+  public async getTodaySummary(): Promise<any[]> {
+    const today = new Date().toLocaleDateString("en-CA");
+
+    // 1. Fetch ALL users
+    const users = await User.findAll({
+      where: {
+        status: { [Op.or]: ["Active", "Invited"] },
+      },
+      attributes: ["id", "name", "email", "role"],
+    });
+
+    // 2. Fetch TODAY's attendance for everyone
+    const attendance = await Attendance.findAll({
+      where: {
+        date: today,
+      },
+      order: [["clockIn", "ASC"]],
+    });
+
+    // 3. Fetch TODAY's approved leaves
+    const leaves = await Leave.findAll({
+      where: {
+        status: "Approved",
+        startDate: { [Op.lte]: today },
+        endDate: { [Op.gte]: today },
+      },
+    });
+
+    // 4. Map & Aggregate
+    const summary = users.map((user) => {
+      // Find logs for this user
+      const userLogs = attendance.filter((a) => a.userId === user.id);
+
+      // Find leave for this user
+      const userLeave = leaves.find((l) => l.userId === user.id);
+
+      let status = "Absent";
+      let clockIn = "-";
+      let clockOut = "-";
+      let durationStr = "-";
+
+      if (userLogs.length > 0) {
+        status = userLogs.some((l) => l.clockOut === null)
+          ? "Present (Running)"
+          : "Present";
+
+        const firstIn = userLogs[0].clockIn;
+        const lastOut = userLogs[userLogs.length - 1].clockOut;
+
+        clockIn = new Date(firstIn).toLocaleTimeString();
+        clockOut = lastOut ? new Date(lastOut).toLocaleTimeString() : "-";
+
+        const totalMinutes = userLogs.reduce(
+          (acc, curr) => acc + (curr.duration || 0),
+          0
+        );
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        durationStr = `${h}h ${m}m`;
+      } else if (userLeave) {
+        status = `Leave (${userLeave.type})`;
+      } else {
+        // If it's a weekend, maybe Week Off? For now default Absent if no logs.
+        // Optional: Check Sunday
+        if (new Date(today).getDay() === 0) status = "Week Off";
+      }
+
+      return {
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status,
+        clockIn,
+        clockOut,
+        duration: durationStr,
+      };
+    });
+
+    return summary;
+  }
 }

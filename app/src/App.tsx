@@ -7,6 +7,7 @@ import LeaveManagementPage from '@/pages/user/LeaveManagement';
 import UserManagement from '@/pages/admin/UserManagement';
 import LeaveApprovals from '@/pages/admin/LeaveApprovals';
 import AttendanceReport from '@/pages/admin/AttendanceReport';
+import ConsolidatedAttendance from '@/pages/admin/ConsolidatedAttendance';
 import SetupPassword from '@/pages/SetupPassword';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
@@ -76,6 +77,7 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        <Route path="/admin/consolidated" element={<ConsolidatedAttendance />} />
         <Route path="/admin/reports" element={<Navigate to="/admin/attendance" replace />} />
         
         <Route 
