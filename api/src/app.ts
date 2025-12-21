@@ -1,4 +1,4 @@
-import express, { json, urlencoded } from "express";
+import express, { json, urlencoded, Router } from "express";
 import { RegisterRoutes } from "./routes/routes";
 import swaggerUi from "swagger-ui-express";
 import cors from "cors";
@@ -16,4 +16,7 @@ app.use("/docs", swaggerUi.serve, async (_req: any, res: any) => {
   );
 });
 
-RegisterRoutes(app);
+// Use Router for /api prefix
+const apiRouter = Router();
+RegisterRoutes(apiRouter);
+app.use("/api", apiRouter);

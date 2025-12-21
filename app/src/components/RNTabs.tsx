@@ -33,10 +33,16 @@ export interface RNTabsProps extends VariantProps<typeof tabsListVariants> {
   tabs: { id: string; label: string; content: React.ReactNode }[];
   defaultActive?: string;
   className?: string;
+  onValueChange?: (value: string) => void;
 }
 
-export function RNTabs({ tabs, defaultActive, className, fullWidth }: RNTabsProps) {
+export function RNTabs({ tabs, defaultActive, className, fullWidth, onValueChange }: RNTabsProps) {
   const [active, setActive] = useState(defaultActive || tabs[0]?.id);
+
+  const handleTabClick = (id: string) => {
+    setActive(id);
+    onValueChange?.(id);
+  };
 
   return (
     <div className={cn("w-full space-y-4", className)}>
@@ -45,7 +51,7 @@ export function RNTabs({ tabs, defaultActive, className, fullWidth }: RNTabsProp
           <button
             key={t.id}
             type="button"
-            onClick={() => setActive(t.id)}
+            onClick={() => handleTabClick(t.id)}
             data-state={active === t.id ? 'active' : 'inactive'}
             className={cn(tabsTriggerVariants({ fullWidth }))}
           >
@@ -53,7 +59,7 @@ export function RNTabs({ tabs, defaultActive, className, fullWidth }: RNTabsProp
           </button>
         ))}
       </div>
-      <div className="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-2">
+      <div className="mt-2 w-full ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-2">
          {tabs.find((t) => t.id === active)?.content}
       </div>
     </div>
