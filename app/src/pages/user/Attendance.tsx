@@ -75,9 +75,14 @@ function AttendancePage() {
 
   return (
     <div className="p-8 space-y-8">
-      <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--color-primary-600)] to-[var(--color-primary-400)] bg-clip-text text-transparent">
-        Attendance
-      </h1>
+      <div className="flex items-center gap-4">
+        <RNButton variant="ghost" onClick={() => window.history.back()}>
+            ← Back
+        </RNButton>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--color-primary-600)] to-[var(--color-primary-400)] bg-clip-text text-transparent">
+            Attendance
+        </h1>
+      </div>
 
       {error && <RNAlert variant="error" title="Error" dismissible>{error}</RNAlert>}
       {success && <RNAlert variant="success" title="Success" dismissible>{success}</RNAlert>}

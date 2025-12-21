@@ -126,6 +126,7 @@ const models: TsoaRoute.Models = {
             "date": {"dataType":"datetime","required":true},
             "clockIn": {"dataType":"datetime","required":true},
             "clockOut": {"dataType":"datetime"},
+            "lastClockIn": {"dataType":"datetime"},
             "duration": {"dataType":"double"},
             "status": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["Present"]},{"dataType":"enum","enums":["Half Day"]},{"dataType":"enum","enums":["Absent"]}],"required":true},
             "workFrom": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["Office"]},{"dataType":"enum","enums":["Home"]}],"required":true},

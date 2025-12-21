@@ -114,9 +114,14 @@ function LeaveManagementPage() {
 
   return (
     <div className="p-8 space-y-8">
-      <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--color-primary-600)] to-[var(--color-primary-400)] bg-clip-text text-transparent">
-        Leave Management
-      </h1>
+      <div className="flex items-center gap-4">
+        <RNButton variant="ghost" onClick={() => window.history.back()}>
+            ← Back
+        </RNButton>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--color-primary-600)] to-[var(--color-primary-400)] bg-clip-text text-transparent">
+            Leave Management
+        </h1>
+      </div>
 
       <div className="grid grid-cols-3 gap-4">
         {Object.entries(balances).map(([key, val]) => (

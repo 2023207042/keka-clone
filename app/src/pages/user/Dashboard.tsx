@@ -11,16 +11,45 @@ interface AttendanceStatus {
   clockOut: string | null;
   duration: number | null;
   status: string;
+  lastClockIn?: string; // Added for live timer logic
 }
 
 function UserDashboard() {
   const user = authService.getCurrentUser();
   const [todayStatus, setTodayStatus] = useState<AttendanceStatus | null>(null);
   const [loading, setLoading] = useState(false);
+  // Real-time duration state
+  const [liveDuration, setLiveDuration] = useState<string>('--');
 
   useEffect(() => {
     fetchTodayStatus();
   }, []);
+
+  // Update timer every minute
+  useEffect(() => {
+    if (!todayStatus) return;
+
+    const updateTimer = () => {
+        let totalMinutes = todayStatus.duration || 0;
+
+        // If currently running, add time since lastClockIn
+        if (todayStatus.clockIn && !todayStatus.clockOut && todayStatus.lastClockIn) {
+            const start = new Date(todayStatus.lastClockIn);
+            const now = new Date();
+            const diffMs = now.getTime() - start.getTime();
+            const diffMins = Math.floor(diffMs / 60000);
+            totalMinutes += diffMins;
+        }
+
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        setLiveDuration(`${h}h ${m}m` + (!todayStatus.clockOut && todayStatus.clockIn ? ' (Running)' : ''));
+    };
+
+    updateTimer(); // Initial call
+    const interval = setInterval(updateTimer, 60000); // 1 minute
+    return () => clearInterval(interval);
+  }, [todayStatus]);
 
   const fetchTodayStatus = async () => {
     if (!user) return;
@@ -104,29 +133,7 @@ function UserDashboard() {
                              </div>
                              <div className="flex items-center gap-2">
                                 <Coffee size={16} className="text-orange-600"/>
-                                <span>Duration: <span className="font-semibold text-gray-900">
-                                    {(() => {
-                                        if (!todayStatus) return '--';
-                                        // Base duration from completed sessions
-                                        let dur = todayStatus.duration || 0;
-                                        
-                                        // If currently clocked in, add running time
-                                        if (todayStatus.clockIn && !todayStatus.clockOut) {
-                                            // Calculate diff from LAST clock in? 
-                                            // ERROR: The backend returns 'clockIn' as the FIRST clock in of the day.
-                                            // We don't have the "Current Session Start" time if we only return First In.
-                                            // However, for single session or simply showing "Total Duration", we might need to fetch `sessions` or just show static "Current".
-                                            // But for "Live" timer, we ideally need the start of the CURRENT session.
-                                            // Let's settle for showing the static duration + " (Running)" indicator or similar if I can't easily get exact ms.
-                                            // Wait, user complained about "-".
-                                            // If I show just `dur`, it will be 0 for the first session.
-                                            // Let's assume the user wants to see elapsed time since *First* Clock In? No, that counts breaks.
-                                            // Let's show `dur` formatted.
-                                            return `${Math.floor(dur / 60)}h ${dur % 60}m` + (!todayStatus.clockOut ? ' + Running' : '');
-                                        }
-                                        return `${Math.floor(dur / 60)}h ${dur % 60}m`;
-                                    })()}
-                                </span></span>
+                                <span>Duration: <span className="font-semibold text-gray-900">{liveDuration}</span></span>
                              </div>
                         </div>
                     </div>

@@ -50,7 +50,36 @@ function AttendanceReport() {
     finally { setLoading(false); }
   };
 
-  const formatDuration = (minutes: number) => {
+  // Real-time update for running sessions
+  useEffect(() => {
+    const interval = setInterval(() => {
+        setLogs(prevLogs => [...prevLogs]); // Force re-render to update timers
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatDuration = (row: any) => {
+      // Logic for "Not Clocked Out"
+      const todayStr = new Date().toISOString().split('T')[0];
+      const rowDateStr = new Date(row.date).toISOString().split('T')[0];
+      
+      // If it's a PAST date and clockOut is missing -> Not Clocked Out
+      if (!row.clockOut && rowDateStr < todayStr) {
+          return <span className="text-red-500 font-medium">Not Clocked Out</span>;
+      }
+
+      // If it's TODAY and clockOut is missing -> Running
+      if (!row.clockOut && rowDateStr === todayStr) {
+           const start = new Date(row.clockIn);
+           const now = new Date();
+           const diffMs = now.getTime() - start.getTime();
+           const minutes = Math.floor(diffMs / 60000);
+           const h = Math.floor(minutes / 60);
+           const m = minutes % 60;
+           return <span className="text-green-600 font-medium animate-pulse">{`${h}h ${m}m (Running)`}</span>;
+      }
+
+      const minutes = row.duration;
       if (!minutes) return '-';
       const hours = Math.floor(minutes / 60);
       const mins = minutes % 60;
@@ -63,17 +92,28 @@ function AttendanceReport() {
       const headers = ['User ID', 'Name', 'Email', 'Date', 'Clock In', 'Clock Out', 'Duration', 'Status', 'Work From'];
       const csvContent = [
           headers.join(','),
-          ...logs.map((row: any) => [
-              row.userId,
-              `"${row.userName || ''}"`,
-              `"${row.userEmail || ''}"`,
-              new Date(row.date).toLocaleDateString(),
-              new Date(row.clockIn).toLocaleTimeString(),
-              row.clockOut ? new Date(row.clockOut).toLocaleTimeString() : '-',
-              formatDuration(row.duration),
-              row.status,
-              row.workFrom
-          ].join(','))
+          ...logs.map((row: any) => {
+               // CSV needs simple strings
+               let durStr = '-';
+                const todayStr = new Date().toISOString().split('T')[0];
+                const rowDateStr = new Date(row.date).toISOString().split('T')[0];
+
+               if (!row.clockOut && rowDateStr < todayStr) durStr = 'Not Clocked Out';
+               else if (!row.clockOut && rowDateStr === todayStr) durStr = 'Running';
+               else if (row.duration) durStr = `${Math.floor(row.duration / 60)}h ${row.duration % 60}m`;
+
+              return [
+                row.userId,
+                `"${row.userName || ''}"`,
+                `"${row.userEmail || ''}"`,
+                new Date(row.date).toLocaleDateString(),
+                new Date(row.clockIn).toLocaleTimeString(),
+                row.clockOut ? new Date(row.clockOut).toLocaleTimeString() : '-',
+                durStr,
+                row.status,
+                row.workFrom
+            ].join(',')
+          })
       ].join('\n');
 
       const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -90,7 +130,7 @@ function AttendanceReport() {
     { header: 'Date', accessorKey: 'date', cell: (row: any) => new Date(row.date).toLocaleDateString() },
     { header: 'In', accessorKey: 'clockIn', cell: (row: any) => new Date(row.clockIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) },
     { header: 'Out', accessorKey: 'clockOut', cell: (row: any) => row.clockOut ? new Date(row.clockOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-' },
-    { header: 'Duration', accessorKey: 'duration', cell: (row: any) => formatDuration(row.duration) },
+    { header: 'Duration', accessorKey: 'duration', cell: (row: any) => formatDuration(row) },
     { header: 'Status', accessorKey: 'status', cell: (row: any) => (
         <RNBadge variant={row.status === 'Absent' ? 'destructive' : row.status === 'Half Day' ? 'warning' : 'success'}>
             {row.status}

@@ -29,6 +29,7 @@ interface AttendanceResponse {
   date: Date;
   clockIn: Date;
   clockOut?: Date;
+  lastClockIn?: Date;
   duration?: number;
   status: "Present" | "Half Day" | "Absent";
   workFrom: "Office" | "Home";
@@ -200,6 +201,7 @@ export class AttendanceController extends Controller {
       duration: totalDuration,
       status: "Present",
       workFrom: firstSession.workFrom,
+      lastClockIn: lastSession.clockIn, // Need this for live timer
     } as AttendanceResponse;
   }
 
