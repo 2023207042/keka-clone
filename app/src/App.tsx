@@ -14,7 +14,7 @@ import { authService } from '@/services/auth';
 import type { ReactNode } from 'react';
 
 // Simple Auth Guard
-const ProtectedRoute = ({ children, role }: { children: ReactNode, role?: 'admin' | 'user' }) => {
+const ProtectedRoute = ({ children, role }: { children: ReactNode, role?: 'admin' | 'employee' }) => {
   const location = useLocation();
   const isAuthenticated = authService.isAuthenticated();
   const user = authService.getCurrentUser();
@@ -66,6 +66,7 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        <Route path="/admin/approvals" element={<Navigate to="/admin/leaves" replace />} />
         
         <Route 
           path="/admin/attendance" 
@@ -75,11 +76,12 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        <Route path="/admin/reports" element={<Navigate to="/admin/attendance" replace />} />
         
         <Route 
           path="/user/dashboard" 
           element={
-            <ProtectedRoute role="user">
+            <ProtectedRoute role="employee">
               <UserDashboard />
             </ProtectedRoute>
           } 
@@ -88,7 +90,7 @@ function App() {
         <Route 
           path="/user/attendance" 
           element={
-            <ProtectedRoute role="user">
+            <ProtectedRoute role="employee">
               <AttendancePage />
             </ProtectedRoute>
           } 
@@ -97,7 +99,7 @@ function App() {
         <Route 
           path="/user/leave" 
           element={
-            <ProtectedRoute role="user">
+            <ProtectedRoute role="employee">
               <LeaveManagementPage />
             </ProtectedRoute>
           } 

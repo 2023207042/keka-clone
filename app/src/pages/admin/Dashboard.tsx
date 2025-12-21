@@ -1,42 +1,129 @@
+import { useEffect, useState } from 'react';
 import { RNCard } from '@/components/RNCard';
-import { RNButton } from '@/components/RNButton';
+import { Users, UserCheck, UserX, Clock, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import api from '@/services/api';
 import { authService } from '@/services/auth';
+import { RNButton } from '@/components/RNButton';
+
+interface Stats {
+  totalEmployees: number;
+  presentToday: number;
+  absentToday: number;
+  onLeaveToday: number;
+}
 
 function AdminDashboard() {
   const user = authService.getCurrentUser();
+  const [stats, setStats] = useState<Stats>({
+    totalEmployees: 0,
+    presentToday: 0,
+    absentToday: 0,
+    onLeaveToday: 0
+  });
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const { data } = await api.get('/attendance/stats');
+      setStats(data);
+    } catch (error) {
+      console.error("Failed to fetch stats", error);
+    }
+  };
+
+  const statCards = [
+    {
+      label: 'Total Employees',
+      value: stats.totalEmployees,
+      icon: <Users className="w-6 h-6 text-blue-500" />,
+      color: 'bg-blue-50 border-blue-100',
+    },
+    {
+      label: 'Present Today',
+      value: stats.presentToday,
+      icon: <UserCheck className="w-6 h-6 text-green-500" />,
+      color: 'bg-green-50 border-green-100',
+    },
+    {
+      label: 'Absent',
+      value: stats.absentToday,
+      icon: <UserX className="w-6 h-6 text-red-500" />,
+      color: 'bg-red-50 border-red-100',
+    },
+    {
+      label: 'On Leave',
+      value: stats.onLeaveToday,
+      icon: <Clock className="w-6 h-6 text-orange-500" />,
+      color: 'bg-orange-50 border-orange-100',
+    },
+  ];
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--color-primary-600)] to-[var(--color-primary-400)] bg-clip-text text-transparent">
-          Admin Dashboard
-        </h1>
+        <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--color-primary-600)] to-[var(--color-primary-400)] bg-clip-text text-transparent">
+            Admin Dashboard
+            </h1>
+            <p className="text-[var(--text-secondary)] mt-1">Welcome back, {user?.name || 'Admin'}!</p>
+        </div>
         <RNButton variant="outline" onClick={authService.logout}>Logout</RNButton>
       </div>
 
-      <RNCard>
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Welcome Back, {user?.name || 'Admin'}!</h2>
-          <p className="text-[var(--text-secondary)]">
-            You have full access to manage users, settings, and system configurations.
-          </p>
-          {/* Add admin specific content here */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] cursor-pointer hover:bg-[var(--color-surface-200)] transition-colors" onClick={() => window.location.href = '/admin/users'}>
-                  <h3 className="font-bold text-lg mb-2 text-[var(--color-primary-600)]">User Management</h3>
-                  <p className="text-sm text-[var(--text-secondary)]">Add & Manage Employees</p>
-              </div>
-              <div className="p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] cursor-pointer hover:bg-[var(--color-surface-200)] transition-colors" onClick={() => window.location.href = '/admin/leaves'}>
-                  <h3 className="font-bold text-lg mb-2 text-[var(--color-primary-600)]">Leave Approvals</h3>
-                  <p className="text-sm text-[var(--text-secondary)]">Approve or Reject Requests</p>
-              </div>
-              <div className="p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] cursor-pointer hover:bg-[var(--color-surface-200)] transition-colors" onClick={() => window.location.href = '/admin/attendance'}>
-                  <h3 className="font-bold text-lg mb-2 text-[var(--color-primary-600)]">Attendance Report</h3>
-                  <p className="text-sm text-[var(--text-secondary)]">View Employee Logs</p>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statCards.map((stat, index) => (
+          <div key={index} className={`p-6 rounded-2xl border ${stat.color} transition-all hover:shadow-md bg-white`}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-white rounded-lg shadow-sm">{stat.icon}</div>
+              <span className="text-2xl font-bold text-[var(--text-primary)]">{stat.value}</span>
+            </div>
+            <p className="text-sm font-medium text-[var(--text-secondary)]">{stat.label}</p>
           </div>
-        </div>
-      </RNCard>
+        ))}
+      </div>
+
+      <h2 className="text-xl font-semibold text-[var(--text-primary)]">Quick Actions</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Link to="/admin/users" className="block group">
+          <RNCard className="h-full hover:border-[var(--color-primary-300)] transition-colors group-hover:shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)] group-hover:text-[var(--color-primary-600)]">User Management</h3>
+                <p className="text-[var(--text-secondary)] text-sm mt-1">Add, edit, or invite employees</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-[var(--text-tertiary)] group-hover:text-[var(--color-primary-500)]" />
+            </div>
+          </RNCard>
+        </Link>
+
+        <Link to="/admin/leaves" className="block group">
+          <RNCard className="h-full hover:border-[var(--color-primary-300)] transition-colors group-hover:shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)] group-hover:text-[var(--color-primary-600)]">Leave Approvals</h3>
+                <p className="text-[var(--text-secondary)] text-sm mt-1">Review pending leave requests</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-[var(--text-tertiary)] group-hover:text-[var(--color-primary-500)]" />
+            </div>
+          </RNCard>
+        </Link>
+
+        <Link to="/admin/reports" className="block group">
+           <RNCard className="h-full hover:border-[var(--color-primary-300)] transition-colors group-hover:shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)] group-hover:text-[var(--color-primary-600)]">Attendance Report</h3>
+                <p className="text-[var(--text-secondary)] text-sm mt-1">View logs and export data</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-[var(--text-tertiary)] group-hover:text-[var(--color-primary-500)]" />
+            </div>
+          </RNCard>
+        </Link>
+      </div>
     </div>
   );
 }

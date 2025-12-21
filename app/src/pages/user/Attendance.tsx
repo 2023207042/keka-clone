@@ -67,9 +67,9 @@ function AttendancePage() {
 
   const columns = [
     { header: 'Date', accessorKey: 'date' },
-    { header: 'Clock In', accessorKey: 'clockIn', cell: (row: any) => new Date(row.clockIn).toLocaleTimeString() },
-    { header: 'Clock Out', accessorKey: 'clockOut', cell: (row: any) => row.clockOut ? new Date(row.clockOut).toLocaleTimeString() : '-' },
-    { header: 'Duration (m)', accessorKey: 'duration', cell: (row: any) => row.duration || '-' },
+    { header: 'Clock In', accessorKey: 'clockIn', cell: (row: any) => row.clockIn ? new Date(row.clockIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-' },
+    { header: 'Clock Out', accessorKey: 'clockOut', cell: (row: any) => row.clockOut ? new Date(row.clockOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-' },
+    { header: 'Duration (m)', accessorKey: 'duration', cell: (row: any) => row.duration !== undefined ? `${Math.floor(row.duration / 60)}h ${row.duration % 60}m` : '-' },
     { header: 'Status', accessorKey: 'status', cell: (row: any) => <RNBadge variant={row.status === 'Present' ? 'success' : row.status === 'Absent' ? 'destructive' : 'warning'}>{row.status}</RNBadge> }
   ];
 

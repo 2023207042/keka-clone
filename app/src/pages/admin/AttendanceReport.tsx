@@ -5,18 +5,36 @@ import { RNButton } from '@/components/RNButton';
 import { RNTable } from '@/components/RNTable';
 import { RNBadge } from '@/components/RNBadge';
 import { RNDateRangePicker } from '@/components/RNDateRangePicker';
+import { RNSelect } from '@/components/RNSelect';
 import { ArrowLeft, Download, Filter } from 'lucide-react';
 import api from '@/services/api';
 
 function AttendanceReport() {
   const navigate = useNavigate();
   const [logs, setLogs] = useState([]);
-  const [dateRange, setDateRange] = useState<any>({});
   const [loading, setLoading] = useState(false);
+  
+  // Filters
+  const [dateRange, setDateRange] = useState<any>({});
+  const [users, setUsers] = useState<any[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
 
   useEffect(() => {
+    fetchUsers();
     fetchLogs();
   }, []);
+
+  const fetchUsers = async () => {
+      try {
+          const res = await api.get('/users');
+          // Format for RNSelect
+          const userOptions = res.data.map((u: any) => ({
+              label: `${u.name} (${u.email})`,
+              value: u.id.toString()
+          }));
+          setUsers([{ label: 'All Users', value: '' }, ...userOptions]);
+      } catch (err) { console.error(err); }
+  };
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -24,6 +42,7 @@ function AttendanceReport() {
         const params: any = {};
         if (dateRange?.from) params.startDate = dateRange.from.toISOString();
         if (dateRange?.to) params.endDate = dateRange.to.toISOString();
+        if (selectedUserId) params.userId = selectedUserId;
 
         const res = await api.get('/attendance/all', { params });
         setLogs(res.data);
@@ -31,18 +50,27 @@ function AttendanceReport() {
     finally { setLoading(false); }
   };
 
+  const formatDuration = (minutes: number) => {
+      if (!minutes) return '-';
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      return `${hours}h ${mins}m`;
+  };
+
   const downloadCSV = () => {
       if (!logs.length) return;
 
-      const headers = ['User ID', 'Date', 'Clock In', 'Clock Out', 'Duration (m)', 'Status', 'Work From'];
+      const headers = ['User ID', 'Name', 'Email', 'Date', 'Clock In', 'Clock Out', 'Duration', 'Status', 'Work From'];
       const csvContent = [
           headers.join(','),
           ...logs.map((row: any) => [
               row.userId,
+              `"${row.userName || ''}"`,
+              `"${row.userEmail || ''}"`,
               new Date(row.date).toLocaleDateString(),
               new Date(row.clockIn).toLocaleTimeString(),
               row.clockOut ? new Date(row.clockOut).toLocaleTimeString() : '-',
-              row.duration || '-',
+              formatDuration(row.duration),
               row.status,
               row.workFrom
           ].join(','))
@@ -57,11 +85,12 @@ function AttendanceReport() {
   };
 
   const columns = [
-    { header: 'User ID', accessorKey: 'userId' },
+    { header: 'Name', accessorKey: 'userName' },
+    { header: 'Email', accessorKey: 'userEmail', cell: (row: any) => <span className="text-xs text-[var(--text-secondary)]">{row.userEmail}</span> },
     { header: 'Date', accessorKey: 'date', cell: (row: any) => new Date(row.date).toLocaleDateString() },
-    { header: 'Clock In', accessorKey: 'clockIn', cell: (row: any) => new Date(row.clockIn).toLocaleTimeString() },
-    { header: 'Clock Out', accessorKey: 'clockOut', cell: (row: any) => row.clockOut ? new Date(row.clockOut).toLocaleTimeString() : '-' },
-    { header: 'Duration (m)', accessorKey: 'duration', cell: (row: any) => row.duration || '-' },
+    { header: 'In', accessorKey: 'clockIn', cell: (row: any) => new Date(row.clockIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) },
+    { header: 'Out', accessorKey: 'clockOut', cell: (row: any) => row.clockOut ? new Date(row.clockOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-' },
+    { header: 'Duration', accessorKey: 'duration', cell: (row: any) => formatDuration(row.duration) },
     { header: 'Status', accessorKey: 'status', cell: (row: any) => (
         <RNBadge variant={row.status === 'Absent' ? 'destructive' : row.status === 'Half Day' ? 'warning' : 'success'}>
             {row.status}
@@ -71,7 +100,7 @@ function AttendanceReport() {
   ];
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 animate-in fade-in duration-500">
        <div className="flex items-center justify-between">
            <div className="flex items-center gap-4">
                <RNButton variant="ghost" onClick={() => navigate('/admin/dashboard')}>
@@ -87,14 +116,24 @@ function AttendanceReport() {
        </div>
 
       <RNCard className="space-y-6">
-          <div className="flex items-end gap-4">
-              <div className="flex-1 max-w-sm">
+          <div className="flex items-end gap-4 flex-wrap">
+              <div className="min-w-[200px]">
+                  <RNSelect 
+                    label="Filter by Employee" 
+                    options={users} 
+                    value={selectedUserId} 
+                    onChange={e => setSelectedUserId(e.target.value)} 
+                  />
+              </div>
+              
+              <div className="min-w-[250px]">
                   <label className="text-sm font-medium mb-1 block text-[var(--text-secondary)]">Date Range</label>
                   <RNDateRangePicker 
                       selected={dateRange}
                       onSelect={setDateRange}
                   />
               </div>
+
               <RNButton onClick={fetchLogs} disabled={loading}>
                   <Filter className="w-4 h-4 mr-2" /> 
                   {loading ? 'Filtering...' : 'Apply Filters'}
