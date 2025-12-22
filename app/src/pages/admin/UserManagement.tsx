@@ -25,8 +25,9 @@ function UserManagement() {
   // Balance Modal
   const [editingBalanceUser, setEditingBalanceUser] = useState<any>(null);
   const [balances, setBalances] = useState({ sick: 10, casual: 10, earned: 15 });
-  const [balanceLoading, setBalanceLoading] = useState(false);
 
+
+  const [, setBalanceLoading] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
 
   useEffect(() => {
@@ -67,7 +68,7 @@ function UserManagement() {
       setEditingBalanceUser(user);
       setBalanceLoading(true);
       try {
-          const res = await api.get('/leave/balances', { params: { userId: user.id } });
+          await api.get('/leave/balances', { params: { userId: user.id } });
           // Note: API returns remaining balance, but for admin setting we want Total. 
           // For simplicity in this iteration, we will just default or fetch if we had a dedicated endpoint for totals.
           // Since our model has sickTotal/sickUsed, and getBalances returns (Total - Used), 

@@ -86,7 +86,7 @@ export class EmailService {
           <p style="color: #666; margin-bottom: 30px;">Please login to the admin dashboard to review and take action.</p>
           
           <a href="${
-            process.env.CLIENT_URL || "http://localhost:5173"
+            process.env.FRONTEND_URL || "http://localhost:5173"
           }/admin/leaves" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Review Request</a>
         </div>
         <div style="background-color: #f3f4f6; padding: 15px; text-align: center; color: #9ca3af; font-size: 12px;">
@@ -122,7 +122,7 @@ export class EmailService {
 
           <div style="margin-top: 30px;">
              <a href="${
-               process.env.CLIENT_URL || "http://localhost:5173"
+               process.env.FRONTEND_URL || "http://localhost:5173"
              }/user/leave" style="display: inline-block; padding: 12px 24px; background-color: ${color}; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">View Details</a>
           </div>
         </div>

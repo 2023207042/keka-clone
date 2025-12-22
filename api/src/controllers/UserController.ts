@@ -48,7 +48,7 @@ export class UserController extends Controller {
       designation: u.designation,
       status: u.status || "Active", // Default to Active
       inviteLink: u.inviteToken
-        ? `http://localhost:5173/setup-password?token=${u.inviteToken}`
+        ? `${process.env.FRONTEND_URL}/setup-password?token=${u.inviteToken}`
         : undefined,
     }));
   }
@@ -81,7 +81,7 @@ export class UserController extends Controller {
     // Initialize Leave Balance
     await LeaveBalance.create({ userId: user.id });
 
-    const inviteLink = `http://localhost:5173/setup-password?token=${inviteToken}`;
+    const inviteLink = `${process.env.FRONTEND_URL}/setup-password?token=${inviteToken}`;
 
     // Send Email
     try {
