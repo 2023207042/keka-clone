@@ -113,4 +113,45 @@ export class UserController extends Controller {
     // For now, simple delete.
     await user.destroy();
   }
+
+  @Post("{id}")
+  @SuccessResponse("200", "Updated")
+  public async updateUser(
+    @Path() id: number,
+    @Body() body: Partial<CreateUserParams>
+  ): Promise<UserDTO> {
+    const user = await User.findByPk(id);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Check email uniqueness if changing
+    if (body.email && body.email !== user.email) {
+      const existing = await User.findOne({ where: { email: body.email } });
+      if (existing) {
+        throw new Error("Email already registered");
+      }
+    }
+
+    user.name = body.name || user.name;
+    user.email = body.email || user.email;
+    user.role = body.role || user.role;
+    user.department = body.department || user.department;
+    user.designation = body.designation || user.designation;
+
+    await user.save();
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      department: user.department,
+      designation: user.designation,
+      status: user.status,
+      inviteLink: user.inviteToken
+        ? `${process.env.FRONTEND_URL}/setup-password?token=${user.inviteToken}`
+        : undefined,
+    } as UserDTO;
+  }
 }

@@ -7,7 +7,7 @@ import { RNSelect } from '@/components/RNSelect';
 import { RNAlert } from '@/components/RNAlert';
 import { RNTable } from '@/components/RNTable';
 import { RNBadge } from '@/components/RNBadge';
-import { ArrowLeft, Edit } from 'lucide-react';
+import { ArrowLeft, Edit, UserPen } from 'lucide-react';
 import api from '@/services/api';
 
 function UserManagement() {
@@ -25,6 +25,10 @@ function UserManagement() {
   // Balance Modal
   const [editingBalanceUser, setEditingBalanceUser] = useState<any>(null);
   const [balances, setBalances] = useState({ sick: 10, casual: 10, earned: 15 });
+
+  // Edit User Modal
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ name: '', email: '', role: 'Employee', department: '' });
 
 
   const [, setBalanceLoading] = useState(false);
@@ -100,6 +104,35 @@ function UserManagement() {
       }
   };
 
+  const openEditUserModal = (user: any) => {
+    setEditingUser(user);
+    setEditForm({
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        department: user.department || ''
+    });
+  };
+
+  const handleUpdateUser = async (e: any) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    setLoading(true);
+
+    try {
+        await api.post(`/users/${editingUser.id}`, {
+            ...editForm
+        });
+        setMsg({ type: 'success', text: 'User updated successfully' });
+        setEditingUser(null);
+        fetchUsers();
+    } catch (err: any) {
+        setMsg({ type: 'error', text: err.response?.data?.message || 'Failed to update user' });
+    } finally {
+        setLoading(false);
+    }
+  };
+
   const copyLink = (link: string) => {
       navigator.clipboard.writeText(link);
       alert('Link copied to clipboard');
@@ -121,6 +154,9 @@ function UserManagement() {
                     Copy Invite
                 </RNButton>
             )}
+            <RNButton variant="outline" className="h-8 text-xs" onClick={() => openEditUserModal(row)}>
+                <UserPen className="w-3 h-3 mr-1" /> Edit
+            </RNButton>
             <RNButton variant="outline" className="h-8 text-xs" onClick={() => openBalanceModal(row)}>
                 <Edit className="w-3 h-3 mr-1" /> Balance
             </RNButton>
@@ -201,6 +237,28 @@ function UserManagement() {
                   </div>
               </RNCard>
           </div>
+      )}
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <RNCard className="w-full max-w-lg bg-white">
+                <h2 className="text-xl font-bold mb-4">Edit User Details</h2>
+                <form onSubmit={handleUpdateUser} className="space-y-4">
+                    <RNInput label="Name" value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} required />
+                    <RNInput label="Email" type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} required />
+                    <div className="grid grid-cols-2 gap-4">
+                        <RNSelect label="Role" options={[{label:'Employee', value:'Employee'}, {label:'Admin', value:'Admin'}]} value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})} />
+                        <RNInput label="Department" value={editForm.department} onChange={e => setEditForm({...editForm, department: e.target.value})} />
+                    </div>
+                    
+                    <div className="flex justify-end gap-2 mt-6">
+                        <RNButton type="button" variant="ghost" onClick={() => setEditingUser(null)}>Cancel</RNButton>
+                        <RNButton type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</RNButton>
+                    </div>
+                </form>
+            </RNCard>
+        </div>
       )}
     </div>
   );

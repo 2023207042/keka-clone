@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { RNCard } from '@/components/RNCard';
 import { RNTable } from '@/components/RNTable';
 import { RNBadge } from '@/components/RNBadge';
-import { Users, UserCheck, UserX, Clock, ArrowRight, Calendar } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, ArrowRight, Calendar, Coffee, MapPin, History } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '@/services/api';
 import { authService } from '@/services/auth';
@@ -26,10 +26,100 @@ function AdminDashboard() {
 
   const [todaySummary, setTodaySummary] = useState([]);
 
+  // Attendance State
+  const [todayStatus, setTodayStatus] = useState<{
+    clockIn: string | null;
+    clockOut: string | null;
+    duration: number | null;
+    status: string;
+    lastClockIn?: string;
+  } | null>(null);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [liveDuration, setLiveDuration] = useState<string>('--');
+  // Work From State
+  const [workFrom, setWorkFrom] = useState<'Office' | 'Home'>('Office');
+
   useEffect(() => {
     fetchStats();
     fetchTodaySummary();
+    fetchTodayStatus();
   }, []);
+
+  // Update timer every second
+  useEffect(() => {
+    if (!todayStatus) return;
+
+    const updateTimer = () => {
+        // Assume duration is in minutes from API
+        let totalSeconds = (todayStatus.duration || 0) * 60;
+
+        // If currently running, add time since lastClockIn
+        if (todayStatus.clockIn && !todayStatus.clockOut && todayStatus.lastClockIn) {
+            const start = new Date(todayStatus.lastClockIn);
+            const now = new Date();
+            const diffMs = now.getTime() - start.getTime();
+            const diffSeconds = Math.floor(diffMs / 1000);
+            totalSeconds += diffSeconds;
+        }
+
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        setLiveDuration(`${h}h ${m}m ${s}s` + (!todayStatus.clockOut && todayStatus.clockIn ? ' (Running)' : ''));
+    };
+
+    updateTimer(); // Initial call
+    const interval = setInterval(updateTimer, 1000); // 1 second
+    return () => clearInterval(interval);
+  }, [todayStatus]);
+
+  const fetchTodayStatus = async () => {
+    if (!user) return;
+    try {
+      const { data } = await api.get(`/attendance/today?userId=${user.id}`);
+      setTodayStatus(data);
+    } catch (error) {
+      console.error("Failed to fetch status", error);
+    }
+  };
+
+  const handleClockIn = async () => {
+    if (!user) return;
+    setAttendanceLoading(true);
+    try {
+      await api.post('/attendance/clock-in', { userId: user.id, workFrom });
+      await fetchTodayStatus();
+    } catch (error: any) {
+      console.error("Clock in failed", error);
+      alert(error.response?.data?.message || "Failed to clock in");
+    } finally {
+      setAttendanceLoading(false);
+    }
+  };
+
+  const handleClockOut = async () => {
+    if (!user) return;
+    setAttendanceLoading(true);
+    try {
+      await api.post('/attendance/clock-out', { userId: user.id });
+      await fetchTodayStatus();
+    } catch (error: any) {
+      console.error("Clock out failed", error);
+      alert(error.response?.data?.message || "Failed to clock out");
+    } finally {
+      setAttendanceLoading(false);
+    }
+  };
+
+  const formatTime = (dateString?: string | null) => {
+    if (!dateString) return '--:--';
+    try {
+        return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+        console.error("Date parsing error", e);
+        return 'Invalid Date';
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -99,6 +189,68 @@ function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      {/* Admin Attendance Section */}
+      <h2 className="text-xl font-semibold text-[var(--text-primary)]">My Attendance</h2>
+      <RNCard className="border-blue-100 bg-blue-50/30">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+                <div className="flex gap-8 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <Clock size={16} className="text-green-600"/>
+                        <span>In: <span className="font-semibold text-gray-900">{formatTime(todayStatus?.clockIn)}</span></span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock size={16} className="text-red-600"/>
+                        <span>Out: <span className="font-semibold text-gray-900">{formatTime(todayStatus?.clockOut)}</span></span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Coffee size={16} className="text-orange-600"/>
+                        <span>Duration: <span className="font-semibold text-gray-900">{liveDuration}</span></span>
+                      </div>
+                </div>
+            </div>
+            
+            <div className="flex flex-col gap-3">
+                 <div className="flex gap-3 justify-end items-center">
+                    { (!todayStatus?.clockIn || todayStatus?.clockOut) && (
+                        <div className="bg-white rounded-lg p-1 border flex text-xs">
+                            <button 
+                                onClick={() => setWorkFrom('Office')}
+                                className={`px-3 py-1 rounded-md transition-all ${workFrom === 'Office' ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
+                            >
+                                Office
+                            </button>
+                            <button 
+                                onClick={() => setWorkFrom('Home')}
+                                className={`px-3 py-1 rounded-md transition-all ${workFrom === 'Home' ? 'bg-purple-100 text-purple-700 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
+                            >
+                                Home
+                            </button>
+                        </div>
+                    )}
+                 </div>
+
+                <div className="flex gap-3">
+                    <Link to="/user/attendance">
+                        <RNButton variant="outline" className="h-full">
+                            <History size={16} className="mr-2"/> History
+                        </RNButton>
+                    </Link>
+
+                    {!todayStatus || (todayStatus.clockOut && todayStatus.clockIn) ? (
+                        <RNButton onClick={handleClockIn} disabled={attendanceLoading} className="px-8 py-3 bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] shadow-md hover:shadow-lg transition-all">
+                            {attendanceLoading ? 'Processing...' : 'Clock In'}
+                        </RNButton>
+                    ) : (
+                        <RNButton onClick={handleClockOut} disabled={attendanceLoading} variant="destructive" className="px-8 py-3 shadow-md hover:shadow-lg transition-all">
+                            {attendanceLoading ? 'Processing...' : 'Clock Out'}
+                        </RNButton>
+                    )}
+                </div>
+            </div>
+        </div>
+      </RNCard>
 
       <h2 className="text-xl font-semibold text-[var(--text-primary)]">Quick Actions</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
