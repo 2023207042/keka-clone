@@ -133,6 +133,51 @@ export class EmailService {
     `;
     return this.sendMail(to, `Leave Request ${status}`, html);
   }
+
+  async sendAttendanceNotification(
+    to: string[],
+    userName: string,
+    type: "Late Login" | "Early Logout",
+    time: string
+  ) {
+    const isLate = type === "Late Login";
+    const color = isLate ? "#EA580C" : "#D97706"; // Orange for alerts
+    const html = `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+        <div style="background-color: ${color}; padding: 20px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">Iyyaone Technologies</h1>
+        </div>
+        <div style="padding: 30px; background-color: #ffffff;">
+          <h2 style="color: #333; margin-top: 0;">Attendance Alert: ${type}</h2>
+          <p style="color: #666; font-size: 16px; line-height: 1.5;">
+            <strong>${userName}</strong> has been marked for <strong>${type}</strong>.
+          </p>
+          
+          <div style="background-color: #fff7ed; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid ${color};">
+            <p style="margin: 5px 0; color: #374151;"><strong>Time:</strong> ${time}</p>
+            <p style="margin: 5px 0; color: #374151;"><strong>Status:</strong> ${
+              isLate ? "Clocked In after 9:45 AM" : "Clocked Out before 6:00 PM"
+            }</p>
+          </div>
+
+          <p style="color: #666; margin-bottom: 30px;">This is an automated notification.</p>
+        </div>
+        <div style="background-color: #f3f4f6; padding: 15px; text-align: center; color: #9ca3af; font-size: 12px;">
+          &copy; ${new Date().getFullYear()} Iyyaone Technologies. All rights reserved.
+        </div>
+      </div>
+    `;
+
+    // Ensure 'to' is valid
+    const validRecipients = to.filter((email) => email);
+    if (validRecipients.length === 0) return;
+
+    return this.sendMail(
+      validRecipients.join(","),
+      `Attendance Alert: ${type} - ${userName}`,
+      html
+    );
+  }
 }
 
 export const emailService = new EmailService();

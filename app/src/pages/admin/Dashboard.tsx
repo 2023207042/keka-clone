@@ -322,9 +322,9 @@ function AdminDashboard() {
                       else if (row.status.includes('Leave')) variant = 'warning';
                       return <RNBadge variant={variant}>{row.status}</RNBadge>;
                   }},
-                  { header: 'Clock In', accessorKey: 'clockIn', cell: (row: any) => row.clockIn ? new Date(row.clockIn).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '-' },
-                  { header: 'Clock Out', accessorKey: 'clockOut', cell: (row: any) => row.clockOut ? new Date(row.clockOut).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '-' },
-                  { header: 'Total Duration', accessorKey: 'duration', cell: (row: any) => <span className="font-medium">{row.duration}</span> },
+                  { header: 'Clock In', accessorKey: 'clockIn', cell: (row: any) => (row.clockIn && row.status !== 'Absent') ? new Date(row.clockIn).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '-' },
+                  { header: 'Clock Out', accessorKey: 'clockOut', cell: (row: any) => (row.clockOut && row.status !== 'Absent') ? new Date(row.clockOut).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '-' },
+                  { header: 'Total Duration', accessorKey: 'duration', cell: (row: any) => (typeof row.duration === 'number' && row.duration > 0) ? <span className="font-medium">{Math.floor(row.duration / 60)}h {row.duration % 60}m</span> : '-' },
               ]}
            />
         </div>

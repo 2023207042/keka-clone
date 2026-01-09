@@ -32,24 +32,26 @@ function UserDashboard() {
     if (!todayStatus) return;
 
     const updateTimer = () => {
-        let totalMinutes = todayStatus.duration || 0;
+        // Assume duration is in minutes from API (convert to seconds)
+        let totalSeconds = (todayStatus.duration || 0) * 60;
 
         // If currently running, add time since lastClockIn
         if (todayStatus.clockIn && !todayStatus.clockOut && todayStatus.lastClockIn) {
             const start = new Date(todayStatus.lastClockIn);
             const now = new Date();
             const diffMs = now.getTime() - start.getTime();
-            const diffMins = Math.floor(diffMs / 60000);
-            totalMinutes += diffMins;
+            const diffSeconds = Math.floor(diffMs / 1000);
+            totalSeconds += diffSeconds;
         }
 
-        const h = Math.floor(totalMinutes / 60);
-        const m = totalMinutes % 60;
-        setLiveDuration(`${h}h ${m}m` + (!todayStatus.clockOut && todayStatus.clockIn ? ' (Running)' : ''));
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        setLiveDuration(`${h}h ${m}m ${s}s` + (!todayStatus.clockOut && todayStatus.clockIn ? ' (Running)' : ''));
     };
 
     updateTimer(); // Initial call
-    const interval = setInterval(updateTimer, 60000); // 1 minute
+    const interval = setInterval(updateTimer, 1000); // 1 second
     return () => clearInterval(interval);
   }, [todayStatus]);
 

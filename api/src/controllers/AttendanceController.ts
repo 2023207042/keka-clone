@@ -11,6 +11,7 @@ import { Attendance } from "../models/Attendance";
 import { User } from "../models/User";
 import { Leave } from "../models/Leave";
 import { Op } from "sequelize";
+import { emailService } from "../services/EmailService";
 
 interface ClockInParams {
   userId: number;
@@ -113,11 +114,15 @@ export class AttendanceController extends Controller {
       throw new Error("You are already clocked in. Please clock out first.");
     }
 
+    const clockInTime = new Date();
+
+    // Save to DB
+    let newAttendance;
     try {
-      return await Attendance.create({
+      newAttendance = await Attendance.create({
         userId: body.userId,
         date: today,
-        clockIn: new Date(),
+        clockIn: clockInTime,
         workFrom: body.workFrom || "Office",
         status: "Present",
       });
@@ -125,6 +130,50 @@ export class AttendanceController extends Controller {
       console.error("Attendance Creation Error:", error);
       throw new Error(`Failed to create attendance: ${error.message}`);
     }
+
+    // --- Late Login Check (IST) ---
+    try {
+      // 1. Convert current UTC time to IST
+      // IST is UTC + 5:30
+      const istTime = new Date(clockInTime.getTime() + 5.5 * 60 * 60 * 1000);
+      const istHour = istTime.getUTCHours();
+      const istMinute = istTime.getUTCMinutes();
+
+      // 9:45 AM = 9 * 60 + 45 = 585 minutes (9:30 Start + 15m Grace)
+      const currentMinutes = istHour * 60 + istMinute;
+      const thresholdMinutes = 9 * 60 + 45; // 9:45 AM
+
+      if (currentMinutes > thresholdMinutes) {
+        // Fetch User details
+        const user = await User.findByPk(body.userId);
+        // Fetch Admins
+        const admins = await User.findAll({ where: { role: "Admin" } });
+        const adminEmails = admins
+          .map((u) => u.email)
+          .filter((e) => e) as string[];
+
+        if (user && user.email) {
+          const recipients = [...adminEmails, user.email];
+          const timeString = istTime.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+            timeZone: "UTC",
+          }); // Since we manually shifted time, use UTC here to display "IST" value
+
+          await emailService.sendAttendanceNotification(
+            recipients,
+            user.name || "Employee",
+            "Late Login",
+            timeString
+          );
+        }
+      }
+    } catch (e) {
+      console.error("Failed to send late login notification", e);
+    }
+
+    return newAttendance;
   }
 
   @Post("clock-out")
@@ -160,6 +209,50 @@ export class AttendanceController extends Controller {
     attendance.status = "Present";
 
     await attendance.save();
+
+    // --- Early Logout Check (IST) ---
+    try {
+      // IST is UTC + 5:30
+      // 6:00 PM = 18:00
+      const istTime = new Date(clockOutTime.getTime() + 5.5 * 60 * 60 * 1000);
+      const istHour = istTime.getUTCHours();
+      const istMinute = istTime.getUTCMinutes();
+
+      // 18:00 = 18 * 60 = 1080 minutes
+      const currentMinutes = istHour * 60 + istMinute;
+      const thresholdMinutes = 18 * 60; // 6:00 PM
+
+      // Only mark as Early Logout if it's BEFORE 6 PM
+      if (currentMinutes < thresholdMinutes) {
+        // Fetch User details
+        const user = await User.findByPk(body.userId);
+        // Fetch Admins
+        const admins = await User.findAll({ where: { role: "Admin" } });
+        const adminEmails = admins
+          .map((u) => u.email)
+          .filter((e) => e) as string[];
+
+        if (user && user.email) {
+          const recipients = [...adminEmails, user.email];
+          const timeString = istTime.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+            timeZone: "UTC",
+          });
+
+          await emailService.sendAttendanceNotification(
+            recipients,
+            user.name || "Employee",
+            "Early Logout",
+            timeString
+          );
+        }
+      }
+    } catch (e) {
+      console.error("Failed to send early logout notification", e);
+    }
+
     return attendance;
   }
 
@@ -507,8 +600,8 @@ export class AttendanceController extends Controller {
       const userLeave = leaves.find((l) => l.userId === user.id);
 
       let status = "Absent";
-      let clockIn = "-";
-      let clockOut = "-";
+      let clockIn: string | null = null;
+      let clockOut: string | null = null;
       let durationStr = "-";
 
       if (userLogs.length > 0) {
@@ -519,8 +612,17 @@ export class AttendanceController extends Controller {
         const firstIn = userLogs[0].clockIn;
         const lastOut = userLogs[userLogs.length - 1].clockOut;
 
-        clockIn = new Date(firstIn).toLocaleTimeString();
-        clockOut = lastOut ? new Date(lastOut).toLocaleTimeString() : "-";
+        // Return ISO strings so frontend can format them
+        clockIn =
+          firstIn instanceof Date
+            ? firstIn.toISOString()
+            : new Date(firstIn).toISOString();
+        // If lastOut is present, send ISO. If not (running), send null or "-"
+        clockOut = lastOut
+          ? lastOut instanceof Date
+            ? lastOut.toISOString()
+            : new Date(lastOut).toISOString()
+          : null;
 
         const totalMinutes = userLogs.reduce(
           (acc, curr) => acc + (curr.duration || 0),

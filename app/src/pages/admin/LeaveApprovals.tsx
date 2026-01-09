@@ -8,7 +8,7 @@ import { RNTabs } from '@/components/RNTabs';
 import { RNTextarea } from '@/components/RNTextarea';
 import api from '@/services/api';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, X } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 function LeaveApprovals() {
   const navigate = useNavigate();

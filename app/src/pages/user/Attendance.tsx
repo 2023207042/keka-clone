@@ -66,9 +66,9 @@ function AttendancePage() {
   };
 
   const columns = [
-    { header: 'Date', accessorKey: 'date' },
-    { header: 'Clock In', accessorKey: 'clockIn', cell: (row: any) => row.clockIn ? new Date(row.clockIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-' },
-    { header: 'Clock Out', accessorKey: 'clockOut', cell: (row: any) => row.clockOut ? new Date(row.clockOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-' },
+    { header: 'Date', accessorKey: 'date', cell: (row: any) => new Date(row.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) },
+    { header: 'Clock In', accessorKey: 'clockIn', cell: (row: any) => row.clockIn ? new Date(row.clockIn).toLocaleTimeString('en-US', {hour: 'numeric', minute:'2-digit', hour12: true}) : '-' },
+    { header: 'Clock Out', accessorKey: 'clockOut', cell: (row: any) => row.clockOut ? new Date(row.clockOut).toLocaleTimeString('en-US', {hour: 'numeric', minute:'2-digit', hour12: true}) : '-' },
     { header: 'Duration (m)', accessorKey: 'duration', cell: (row: any) => row.duration !== undefined ? `${Math.floor(row.duration / 60)}h ${row.duration % 60}m` : '-' },
     { header: 'Status', accessorKey: 'status', cell: (row: any) => <RNBadge variant={row.status === 'Present' ? 'success' : row.status === 'Absent' ? 'destructive' : 'warning'}>{row.status}</RNBadge> }
   ];
@@ -90,7 +90,7 @@ function AttendancePage() {
       <RNCard className="flex flex-col items-center justify-center p-12 space-y-6">
          <div className="text-center space-y-2">
             <h2 className="text-2xl font-semibold">Current Status: <span className={status === 'Clocked In' ? 'text-green-600' : 'text-gray-500'}>{status}</span></h2>
-            <p className="text-[var(--text-secondary)]">{new Date().toLocaleDateString()}</p>
+            <p className="text-[var(--text-secondary)]">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
          </div>
 
          <RNButton 
@@ -105,7 +105,7 @@ function AttendancePage() {
 
          <div className="flex gap-2 text-sm text-[var(--text-secondary)]">
             <span className="flex items-center gap-1"><MapPin size={14}/> Office</span>
-            <span className="flex items-center gap-1"><Clock size={14}/> 09:00 AM - 06:00 PM</span>
+            <span className="flex items-center gap-1"><Clock size={14}/> 09:30 AM - 06:00 PM</span>
          </div>
       </RNCard>
 
