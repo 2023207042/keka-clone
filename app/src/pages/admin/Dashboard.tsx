@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { RNCard } from '@/components/RNCard';
 import { RNTable } from '@/components/RNTable';
 import { RNBadge } from '@/components/RNBadge';
-import { Users, UserCheck, UserX, Clock, ArrowRight, Calendar, Coffee, MapPin, History } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, ArrowRight, Calendar, Coffee, History } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '@/services/api';
 import { authService } from '@/services/auth';
