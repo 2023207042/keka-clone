@@ -41,6 +41,12 @@ export class AuthController extends Controller {
       throw new Error("Password required");
     }
 
+    if (!user.password) {
+      throw new Error(
+        "Password not set. Please use the invitation link to set your password."
+      );
+    }
+
     const valid = await bcrypt.compare(body.password, user.password);
     if (!valid) {
       throw new Error("Invalid password");
