@@ -9,6 +9,7 @@ export class Leave extends Model {
   public endDate!: Date;
   public reason!: string;
   public status!: "Pending" | "Approved" | "Rejected";
+  public adminRemarks!: string | null;
 }
 
 Leave.init(
@@ -41,6 +42,10 @@ Leave.init(
     status: {
       type: DataTypes.ENUM("Pending", "Approved", "Rejected"),
       defaultValue: "Pending",
+    },
+    adminRemarks: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   },
   {

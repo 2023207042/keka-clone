@@ -18,6 +18,8 @@ function UserDashboard() {
   const user = authService.getCurrentUser();
   const [todayStatus, setTodayStatus] = useState<AttendanceStatus | null>(null);
   const [loading, setLoading] = useState(false);
+  // Work From State
+  const [workFrom, setWorkFrom] = useState<'Office' | 'Home'>('Office');
   // Real-time duration state
   const [liveDuration, setLiveDuration] = useState<string>('--');
 
@@ -65,7 +67,7 @@ function UserDashboard() {
     if (!user) return;
     setLoading(true);
     try {
-      await api.post('/attendance/clock-in', { userId: user.id, workFrom: 'Office' });
+      await api.post('/attendance/clock-in', { userId: user.id, workFrom });
       await fetchTodayStatus();
     } catch (error: any) {
       console.error("Clock in failed", error);
@@ -92,7 +94,7 @@ function UserDashboard() {
   const formatTime = (dateString?: string | null) => {
     if (!dateString) return '--:--';
     try {
-        return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return new Date(dateString).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     } catch (e) {
         console.error("Date parsing error", e);
         return 'Invalid Date';
@@ -138,16 +140,37 @@ function UserDashboard() {
                         </div>
                     </div>
                     
-                    <div className="flex gap-3">
-                        {!todayStatus || (todayStatus.clockOut && todayStatus.clockIn) ? (
-                             <RNButton onClick={handleClockIn} disabled={loading} className="px-8 py-3 bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] shadow-md hover:shadow-lg transition-all">
-                                {loading ? 'Processing...' : 'Clock In'}
-                            </RNButton>
-                        ) : (
-                            <RNButton onClick={handleClockOut} disabled={loading} variant="destructive" className="px-8 py-3 shadow-md hover:shadow-lg transition-all">
-                                {loading ? 'Processing...' : 'Clock Out'}
-                            </RNButton>
-                        )}
+                    <div className="flex flex-col gap-3">
+                         <div className="flex gap-3 justify-end items-center">
+                            { (!todayStatus?.clockIn || todayStatus?.clockOut) && (
+                                <div className="bg-white rounded-lg p-1 border flex text-xs">
+                                    <button 
+                                        onClick={() => setWorkFrom('Office')}
+                                        className={`px-3 py-1 rounded-md transition-all ${workFrom === 'Office' ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
+                                    >
+                                        Office
+                                    </button>
+                                    <button 
+                                        onClick={() => setWorkFrom('Home')}
+                                        className={`px-3 py-1 rounded-md transition-all ${workFrom === 'Home' ? 'bg-purple-100 text-purple-700 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
+                                    >
+                                        Home
+                                    </button>
+                                </div>
+                            )}
+                         </div>
+
+                        <div className="flex gap-3">
+                            {!todayStatus || (todayStatus.clockOut && todayStatus.clockIn) ? (
+                                 <RNButton onClick={handleClockIn} disabled={loading} className="px-8 py-3 bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] shadow-md hover:shadow-lg transition-all">
+                                    {loading ? 'Processing...' : 'Clock In'}
+                                </RNButton>
+                            ) : (
+                                <RNButton onClick={handleClockOut} disabled={loading} variant="destructive" className="px-8 py-3 shadow-md hover:shadow-lg transition-all">
+                                    {loading ? 'Processing...' : 'Clock Out'}
+                                </RNButton>
+                            )}
+                        </div>
                     </div>
                 </div>
             </RNCard>

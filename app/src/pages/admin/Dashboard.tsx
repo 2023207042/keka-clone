@@ -322,8 +322,8 @@ function AdminDashboard() {
                       else if (row.status.includes('Leave')) variant = 'warning';
                       return <RNBadge variant={variant}>{row.status}</RNBadge>;
                   }},
-                  { header: 'Clock In', accessorKey: 'clockIn', cell: (row: any) => <span className="text-xs font-mono">{row.clockIn}</span> },
-                  { header: 'Clock Out', accessorKey: 'clockOut', cell: (row: any) => <span className="text-xs font-mono">{row.clockOut}</span> },
+                  { header: 'Clock In', accessorKey: 'clockIn', cell: (row: any) => row.clockIn ? new Date(row.clockIn).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '-' },
+                  { header: 'Clock Out', accessorKey: 'clockOut', cell: (row: any) => row.clockOut ? new Date(row.clockOut).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '-' },
                   { header: 'Total Duration', accessorKey: 'duration', cell: (row: any) => <span className="font-medium">{row.duration}</span> },
               ]}
            />

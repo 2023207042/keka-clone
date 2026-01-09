@@ -3,49 +3,137 @@ import { RNCard } from '@/components/RNCard';
 import { RNButton } from '@/components/RNButton';
 import { RNTable } from '@/components/RNTable';
 import { RNAlert } from '@/components/RNAlert';
+import { RNBadge } from '@/components/RNBadge';
+import { RNTabs } from '@/components/RNTabs';
+import { RNTextarea } from '@/components/RNTextarea';
 import api from '@/services/api';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Check, X } from 'lucide-react';
 
 function LeaveApprovals() {
   const navigate = useNavigate();
   const [leaves, setLeaves] = useState([]);
+  const [activeTab, setActiveTab] = useState('Pending');
   const [msg, setMsg] = useState({ type: '', text: '' });
+  
+  // Modal State
+  const [actionModal, setActionModal] = useState<{ isOpen: boolean; leave: any; action: 'Approved' | 'Rejected' | null }>({
+    isOpen: false,
+    leave: null,
+    action: null
+  });
+  const [remarks, setRemarks] = useState('');
 
   useEffect(() => {
-    fetchPending();
-  }, []);
+    fetchLeaves(activeTab);
+  }, [activeTab]);
 
-  const fetchPending = async () => {
+  const fetchLeaves = async (status: string) => {
     try {
-        const res = await api.get('/leave/pending');
+        // Map tab IDs to API status params
+        const statusParam = status === 'All Application' ? 'All' : status;
+        const res = await api.get(`/leave/all?status=${statusParam}`);
         setLeaves(res.data);
     } catch (err) { console.error(err); }
   };
 
-  const handleAction = async (id: number, status: 'Approved' | 'Rejected') => {
+  const openActionModal = (leave: any, action: 'Approved' | 'Rejected') => {
+      setRemarks('');
+      setActionModal({ isOpen: true, leave, action });
+  };
+
+  const handleConfirmAction = async () => {
+    if (actionModal.action === 'Rejected' && !remarks.trim()) {
+        alert("Remarks are required for rejection explanation.");
+        return;
+    }
+
     try {
-        await api.post(`/leave/${id}/status`, { status });
-        setMsg({ type: 'success', text: `Leave ${status} successfully` });
-        fetchPending();
+        await api.post(`/leave/${actionModal.leave.id}/status`, { 
+            status: actionModal.action, 
+            remarks: remarks 
+        });
+        setMsg({ type: 'success', text: `Leave ${actionModal.action} successfully` });
+        setActionModal({ isOpen: false, leave: null, action: null });
+        fetchLeaves(activeTab);
     } catch (err: any) {
         setMsg({ type: 'error', text: 'Action failed' });
     }
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    });
+  };
+
   const columns = [
-    { header: 'User ID', accessorKey: 'userId' },
+    { header: 'Employee', accessorKey: 'userName' },
     { header: 'Type', accessorKey: 'type' },
-    { header: 'From', accessorKey: 'startDate' },
-    { header: 'To', accessorKey: 'endDate' },
+    { header: 'From', accessorKey: 'startDate', cell: (row: any) => formatDate(row.startDate) },
+    { header: 'To', accessorKey: 'endDate', cell: (row: any) => formatDate(row.endDate) },
     { header: 'Reason', accessorKey: 'reason' },
+    { header: 'Status', accessorKey: 'status', cell: (row: any) => 
+        <RNBadge variant={row.status === 'Approved' ? 'success' : row.status === 'Rejected' ? 'destructive' : 'warning'}>
+            {row.status}
+        </RNBadge>
+    },
+    // Show Action column only for Pending tab or when status is Pending
     { header: 'Actions', accessorKey: 'actions', cell: (row: any) => (
-        <div className="flex gap-2">
-            <RNButton size="xs" variant="solid" className="bg-green-600 hover:bg-green-700" onClick={() => handleAction(row.id, 'Approved')}>Approve</RNButton>
-            <RNButton size="xs" variant="destructive" onClick={() => handleAction(row.id, 'Rejected')}>Reject</RNButton>
-        </div>
+        row.status === 'Pending' ? (
+            <div className="flex gap-2">
+                <RNButton size="xs" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => openActionModal(row, 'Approved')}>
+                    Approve
+                </RNButton>
+                <RNButton size="xs" variant="destructive" onClick={() => openActionModal(row, 'Rejected')}>
+                    Reject
+                </RNButton>
+            </div>
+        ) : <span className="text-gray-400 text-xs">-</span>
     )}
   ];
+
+  // Action Modal Component
+  const ActionModal = () => {
+      if (!actionModal.isOpen || !actionModal.leave) return null;
+      const isReject = actionModal.action === 'Rejected';
+      
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className={`bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 border-t-4 ${isReject ? 'border-red-500' : 'border-green-500'}`}>
+                <div className="p-6">
+                    <h3 className="text-xl font-bold mb-2">
+                        {isReject ? 'Reject Leave Request' : 'Approve Leave Request'}
+                    </h3>
+                    <p className="text-gray-500 mb-6">
+                        You are about to {isReject ? 'reject' : 'approve'} the leave request for <span className="font-semibold text-gray-800">{actionModal.leave.userName}</span>.
+                    </p>
+                    
+                    <RNTextarea 
+                        label={isReject ? "Reason for Rejection (Required)" : "Remarks (Optional)"}
+                        value={remarks}
+                        onChange={(e) => setRemarks(e.target.value)}
+                        placeholder={isReject ? "e.g., Critical project delivery..." : "e.g., Enjoy your leave!"}
+                        className="mb-6"
+                    />
+
+                    <div className="flex justify-end gap-3">
+                        <RNButton variant="outline" onClick={() => setActionModal({ ...actionModal, isOpen: false })}>Cancel</RNButton>
+                        <RNButton 
+                            variant={isReject ? "destructive" : "solid"} 
+                            className={!isReject ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+                            onClick={handleConfirmAction}
+                        >
+                            Confirm {actionModal.action}
+                        </RNButton>
+                    </div>
+                </div>
+            </div>
+        </div>
+      );
+  };
 
   return (
     <div className="p-8 space-y-8">
@@ -60,9 +148,20 @@ function LeaveApprovals() {
     
        {msg.text && <RNAlert variant={msg.type as any}>{msg.text}</RNAlert>}
 
-      <RNCard title="Pending Applications">
-         {leaves.length === 0 ? <p className="p-4 text-gray-500">No pending applications.</p> : <RNTable data={leaves} columns={columns} />}
-      </RNCard>
+       <RNCard>
+          <RNTabs 
+            defaultActive="Pending"
+            onValueChange={(id) => setActiveTab(id)}
+            tabs={[
+                { id: 'Pending', label: 'Pending Requests', content: <div className="pt-4"><RNTable data={leaves} columns={columns} /></div> },
+                { id: 'Approved', label: 'Approved', content: <div className="pt-4"><RNTable data={leaves} columns={columns} /></div> },
+                { id: 'Rejected', label: 'Rejected', content: <div className="pt-4"><RNTable data={leaves} columns={columns} /></div> },
+                { id: 'All Application', label: 'All History', content: <div className="pt-4"><RNTable data={leaves} columns={columns} /></div> },
+            ]}
+          />
+       </RNCard>
+       
+       <ActionModal />
     </div>
   );
 }

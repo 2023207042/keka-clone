@@ -28,6 +28,8 @@ interface LeaveResponse {
   endDate: string;
   reason: string;
   status: "Pending" | "Approved" | "Rejected";
+  adminRemarks?: string | null;
+  userName?: string;
 }
 
 @Route("leave")
@@ -106,24 +108,35 @@ export class LeaveController extends Controller {
       endDate: new Date(leave.endDate).toISOString().split("T")[0],
       reason: leave.reason,
       status: leave.status,
+      adminRemarks: leave.adminRemarks,
     }));
   }
 
-  @Get("pending")
-  public async getPendingLeaves(): Promise<LeaveResponse[]> {
+  @Get("all")
+  public async getAllLeaves(
+    @Query() status?: string
+  ): Promise<LeaveResponse[]> {
+    const whereClause: any = {};
+    if (status && status !== "All") {
+      whereClause.status = status;
+    }
+
     const leaves = await Leave.findAll({
-      where: { status: "Pending" },
-      order: [["startDate", "ASC"]],
+      where: whereClause,
+      order: [["startDate", "DESC"]],
+      include: [{ model: User, as: "user", attributes: ["name", "email"] }],
     });
 
-    return leaves.map((leave) => ({
+    return leaves.map((leave: any) => ({
       id: leave.id,
       userId: leave.userId,
+      userName: leave.user?.name || "Unknown",
       type: leave.type,
       startDate: new Date(leave.startDate).toISOString().split("T")[0],
       endDate: new Date(leave.endDate).toISOString().split("T")[0],
       reason: leave.reason,
       status: leave.status,
+      adminRemarks: leave.adminRemarks,
     }));
   }
 
@@ -131,13 +144,16 @@ export class LeaveController extends Controller {
   @SuccessResponse("200", "Updated")
   public async updateStatus(
     id: number,
-    @Body() body: { status: "Approved" | "Rejected" }
+    @Body() body: { status: "Approved" | "Rejected"; remarks?: string }
   ): Promise<void> {
     const leave = await Leave.findByPk(id);
     if (!leave) {
       throw new Error("Leave application not found");
     }
     leave.status = body.status;
+    if (body.remarks) {
+      leave.adminRemarks = body.remarks;
+    }
     await leave.save();
 
     if (body.status === "Approved") {

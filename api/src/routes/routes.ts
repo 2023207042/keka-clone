@@ -61,6 +61,8 @@ const models: TsoaRoute.Models = {
             "endDate": {"dataType":"string","required":true},
             "reason": {"dataType":"string","required":true},
             "status": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["Pending"]},{"dataType":"enum","enums":["Approved"]},{"dataType":"enum","enums":["Rejected"]}],"required":true},
+            "adminRemarks": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "userName": {"dataType":"string"},
         },
         "additionalProperties": false,
     },
@@ -365,24 +367,25 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsLeaveController_getPendingLeaves: Record<string, TsoaRoute.ParameterSchema> = {
+        const argsLeaveController_getAllLeaves: Record<string, TsoaRoute.ParameterSchema> = {
+                status: {"in":"query","name":"status","dataType":"string"},
         };
-        app.get('/leave/pending',
+        app.get('/leave/all',
             ...(fetchMiddlewares<RequestHandler>(LeaveController)),
-            ...(fetchMiddlewares<RequestHandler>(LeaveController.prototype.getPendingLeaves)),
+            ...(fetchMiddlewares<RequestHandler>(LeaveController.prototype.getAllLeaves)),
 
-            async function LeaveController_getPendingLeaves(request: ExRequest, response: ExResponse, next: any) {
+            async function LeaveController_getAllLeaves(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsLeaveController_getPendingLeaves, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsLeaveController_getAllLeaves, request, response });
 
                 const controller = new LeaveController();
 
               await templateService.apiHandler({
-                methodName: 'getPendingLeaves',
+                methodName: 'getAllLeaves',
                 controller,
                 response,
                 next,
@@ -396,7 +399,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsLeaveController_updateStatus: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
-                body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["Approved"]},{"dataType":"enum","enums":["Rejected"]}],"required":true}}},
+                body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"remarks":{"dataType":"string"},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["Approved"]},{"dataType":"enum","enums":["Rejected"]}],"required":true}}},
         };
         app.post('/leave/:id/status',
             ...(fetchMiddlewares<RequestHandler>(LeaveController)),
