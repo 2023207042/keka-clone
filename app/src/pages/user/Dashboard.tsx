@@ -194,6 +194,20 @@ function UserDashboard() {
                 </RNCard>
              </Link>
              
+              <Link to="/user/permissions" className="block h-full">
+                <RNCard className="h-full hover:shadow-md transition-shadow cursor-pointer border-indigo-100 bg-indigo-50/30 group">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-indigo-100 rounded-full text-indigo-600 group-hover:scale-110 transition-transform">
+                            <Clock size={24} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-lg text-gray-800">Request Permission</h3>
+                            <p className="text-sm text-gray-500">Late login / Early checkout</p>
+                        </div>
+                    </div>
+                </RNCard>
+             </Link>
+             
               <Link to="/user/attendance" className="block h-full">
                 <RNCard className="h-full hover:shadow-md transition-shadow cursor-pointer border-purple-100 bg-purple-50/30 group">
                     <div className="flex items-center gap-4">

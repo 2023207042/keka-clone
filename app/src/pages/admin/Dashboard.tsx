@@ -301,6 +301,18 @@ function AdminDashboard() {
             </div>
           </RNCard>
         </Link>
+
+        <Link to="/admin/permissions" className="block group">
+           <RNCard className="h-full hover:border-[var(--color-primary-300)] transition-colors group-hover:shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)] group-hover:text-[var(--color-primary-600)]">Permission Approvals</h3>
+                <p className="text-[var(--text-secondary)] text-sm mt-1">Approve late/early requests</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-[var(--text-tertiary)] group-hover:text-[var(--color-primary-500)]" />
+            </div>
+          </RNCard>
+        </Link>
       </div>
 
       <div className="mt-8">

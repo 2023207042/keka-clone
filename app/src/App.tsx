@@ -11,6 +11,8 @@ import ConsolidatedAttendance from '@/pages/admin/ConsolidatedAttendance';
 import SetupPassword from '@/pages/SetupPassword';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
+import PermissionRequestPage from '@/pages/user/PermissionRequest';
+import PermissionApprovals from '@/pages/admin/PermissionApprovals';
 import { authService } from '@/services/auth';
 import type { ReactNode } from 'react';
 
@@ -79,6 +81,15 @@ function App() {
         />
         <Route path="/admin/consolidated" element={<ConsolidatedAttendance />} />
         <Route path="/admin/reports" element={<Navigate to="/admin/attendance" replace />} />
+
+        <Route 
+          path="/admin/permissions" 
+          element={
+            <ProtectedRoute role="admin">
+              <PermissionApprovals />
+            </ProtectedRoute>
+          } 
+        />
         
         <Route 
           path="/user/dashboard" 
@@ -94,6 +105,15 @@ function App() {
           element={
             <ProtectedRoute>
               <AttendancePage />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/user/permissions" 
+          element={
+            <ProtectedRoute role="employee">
+              <PermissionRequestPage />
             </ProtectedRoute>
           } 
         />

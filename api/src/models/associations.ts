@@ -2,6 +2,7 @@ import { User } from "./User";
 import { Attendance } from "./Attendance";
 import { Leave } from "./Leave";
 import { LeaveBalance } from "./LeaveBalance";
+import { PermissionRequest } from "./PermissionRequest";
 
 export const setupAssociations = () => {
   // User <-> Attendance
@@ -15,4 +16,8 @@ export const setupAssociations = () => {
   // User <-> LeaveBalance
   User.hasOne(LeaveBalance, { foreignKey: "userId", as: "leaveBalance" });
   LeaveBalance.belongsTo(User, { foreignKey: "userId", as: "user" });
+
+  // User <-> PermissionRequest
+  User.hasMany(PermissionRequest, { foreignKey: "userId", as: "permissions" });
+  PermissionRequest.belongsTo(User, { foreignKey: "userId", as: "user" });
 };
