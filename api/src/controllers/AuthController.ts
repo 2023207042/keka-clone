@@ -52,9 +52,13 @@ export class AuthController extends Controller {
       throw new Error("Invalid password");
     }
 
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is not defined in environment variables");
+    }
+
     const token = jwt.sign(
       { id: user.id, role: user.role, name: user.name, email: user.email },
-      process.env.JWT_SECRET || "secret",
+      process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 

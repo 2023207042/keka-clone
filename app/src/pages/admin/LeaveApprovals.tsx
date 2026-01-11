@@ -95,45 +95,7 @@ function LeaveApprovals() {
     )}
   ];
 
-  // Action Modal Component
-  const ActionModal = () => {
-      if (!actionModal.isOpen || !actionModal.leave) return null;
-      const isReject = actionModal.action === 'Rejected';
-      
-      return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className={`bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 border-t-4 ${isReject ? 'border-red-500' : 'border-green-500'}`}>
-                <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2">
-                        {isReject ? 'Reject Leave Request' : 'Approve Leave Request'}
-                    </h3>
-                    <p className="text-gray-500 mb-6">
-                        You are about to {isReject ? 'reject' : 'approve'} the leave request for <span className="font-semibold text-gray-800">{actionModal.leave.userName}</span>.
-                    </p>
-                    
-                    <RNTextarea 
-                        label={isReject ? "Reason for Rejection (Required)" : "Remarks (Optional)"}
-                        value={remarks}
-                        onChange={(e) => setRemarks(e.target.value)}
-                        placeholder={isReject ? "e.g., Critical project delivery..." : "e.g., Enjoy your leave!"}
-                        className="mb-6"
-                    />
 
-                    <div className="flex justify-end gap-3">
-                        <RNButton variant="outline" onClick={() => setActionModal({ ...actionModal, isOpen: false })}>Cancel</RNButton>
-                        <RNButton 
-                            variant={isReject ? "destructive" : "solid"} 
-                            className={!isReject ? "bg-green-600 hover:bg-green-700 text-white" : ""}
-                            onClick={handleConfirmAction}
-                        >
-                            Confirm {actionModal.action}
-                        </RNButton>
-                    </div>
-                </div>
-            </div>
-        </div>
-      );
-  };
 
   return (
     <div className="p-8 space-y-8">
@@ -161,7 +123,39 @@ function LeaveApprovals() {
           />
        </RNCard>
        
-       <ActionModal />
+       {(actionModal.isOpen && actionModal.leave) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className={`bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 border-t-4 ${actionModal.action === 'Rejected' ? 'border-red-500' : 'border-green-500'}`}>
+                <div className="p-6">
+                    <h3 className="text-xl font-bold mb-2">
+                        {actionModal.action === 'Rejected' ? 'Reject Leave Request' : 'Approve Leave Request'}
+                    </h3>
+                    <p className="text-gray-500 mb-6">
+                        You are about to {actionModal.action === 'Rejected' ? 'reject' : 'approve'} the leave request for <span className="font-semibold text-gray-800">{actionModal.leave.userName}</span>.
+                    </p>
+                    
+                    <RNTextarea 
+                        label={actionModal.action === 'Rejected' ? "Reason for Rejection (Required)" : "Remarks (Optional)"}
+                        value={remarks}
+                        onChange={(e) => setRemarks(e.target.value)}
+                        placeholder={actionModal.action === 'Rejected' ? "e.g., Critical project delivery..." : "e.g., Enjoy your leave!"}
+                        className="mb-6"
+                    />
+
+                    <div className="flex justify-end gap-3">
+                        <RNButton variant="outline" onClick={() => setActionModal({ ...actionModal, isOpen: false })}>Cancel</RNButton>
+                        <RNButton 
+                            variant={actionModal.action === 'Rejected' ? "destructive" : "solid"} 
+                            className={!(actionModal.action === 'Rejected') ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+                            onClick={handleConfirmAction}
+                        >
+                            Confirm {actionModal.action}
+                        </RNButton>
+                    </div>
+                </div>
+            </div>
+        </div>
+       )}
     </div>
   );
 }

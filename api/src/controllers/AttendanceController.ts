@@ -12,6 +12,7 @@ import { User } from "../models/User";
 import { Leave } from "../models/Leave";
 import { Op } from "sequelize";
 import { emailService } from "../services/EmailService";
+import { toZonedTime, format } from "date-fns-tz";
 
 interface ClockInParams {
   userId: number;
@@ -133,11 +134,10 @@ export class AttendanceController extends Controller {
 
     // --- Late Login Check (IST) ---
     try {
-      // 1. Convert current UTC time to IST
-      // IST is UTC + 5:30
-      const istTime = new Date(clockInTime.getTime() + 5.5 * 60 * 60 * 1000);
-      const istHour = istTime.getUTCHours();
-      const istMinute = istTime.getUTCMinutes();
+      // Use date-fns-tz for robust timezone conversion
+      const istDate = toZonedTime(clockInTime, "Asia/Kolkata");
+      const istHour = istDate.getHours();
+      const istMinute = istDate.getMinutes();
 
       // 9:45 AM = 9 * 60 + 45 = 585 minutes (9:30 Start + 15m Grace)
       const currentMinutes = istHour * 60 + istMinute;
@@ -154,12 +154,9 @@ export class AttendanceController extends Controller {
 
         if (user && user.email) {
           const recipients = [...adminEmails, user.email];
-          const timeString = istTime.toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-            timeZone: "UTC",
-          }); // Since we manually shifted time, use UTC here to display "IST" value
+          const timeString = format(istDate, "hh:mm a", {
+            timeZone: "Asia/Kolkata",
+          });
 
           await emailService.sendAttendanceNotification(
             recipients,
@@ -212,11 +209,9 @@ export class AttendanceController extends Controller {
 
     // --- Early Logout Check (IST) ---
     try {
-      // IST is UTC + 5:30
-      // 6:00 PM = 18:00
-      const istTime = new Date(clockOutTime.getTime() + 5.5 * 60 * 60 * 1000);
-      const istHour = istTime.getUTCHours();
-      const istMinute = istTime.getUTCMinutes();
+      const istDate = toZonedTime(clockOutTime, "Asia/Kolkata");
+      const istHour = istDate.getHours();
+      const istMinute = istDate.getMinutes();
 
       // 18:00 = 18 * 60 = 1080 minutes
       const currentMinutes = istHour * 60 + istMinute;
@@ -234,11 +229,8 @@ export class AttendanceController extends Controller {
 
         if (user && user.email) {
           const recipients = [...adminEmails, user.email];
-          const timeString = istTime.toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-            timeZone: "UTC",
+          const timeString = format(istDate, "hh:mm a", {
+            timeZone: "Asia/Kolkata",
           });
 
           await emailService.sendAttendanceNotification(
@@ -375,12 +367,21 @@ export class AttendanceController extends Controller {
     const where: any = {};
 
     if (startDate && endDate) {
+      // Extract YYYY-MM-DD to avoid time offset issues
+      // Assuming startDate comes as ISO string but we want the "Local" date intent
+      // Simplest is to take the first 10 chars if it's ISO, OR rely on client to send YYYY-MM-DD
+      // Given the user input: 2026-01-07T18:30:00.000Z, we want to treat this effectively as the "Day" represented
+
+      const sDate = startDate.split("T")[0];
+      const eDate = endDate.split("T")[0];
+
       where.date = {
-        [Op.between]: [new Date(startDate), new Date(endDate)],
+        [Op.between]: [sDate, eDate],
       };
     } else if (startDate) {
+      const sDate = startDate.split("T")[0];
       where.date = {
-        [Op.gte]: new Date(startDate),
+        [Op.gte]: sDate,
       };
     }
 

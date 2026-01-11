@@ -3,11 +3,15 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const dbHost = process.env.DB_HOST || "localhost";
-const dbPort = parseInt(process.env.DB_PORT || "3306");
-const dbUser = process.env.DB_USER || "root";
-const dbPassword = process.env.DB_PASSWORD || "root";
-const dbName = process.env.DB_NAME || "keka_clone_db";
+const dbHost = process.env.DB_HOST;
+const dbPort = process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306;
+const dbUser = process.env.DB_USER;
+const dbPassword = process.env.DB_PASSWORD;
+const dbName = process.env.DB_NAME;
+
+if (!dbHost || !dbUser || !dbPassword || !dbName) {
+  throw new Error("Missing database configuration. Please check .env file.");
+}
 
 export const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
   host: dbHost,
