@@ -24,23 +24,44 @@ interface UpdateStatusParams {
   remarks?: string;
 }
 
+interface PermissionRequestDTO {
+  id: number;
+  userId: number;
+  userName?: string;
+  type: "Late Clock In" | "Early Check out";
+  date: Date;
+  reason: string;
+  status: "Pending" | "Approved" | "Rejected";
+  adminRemarks?: string | null;
+}
+
 @Route("permissions")
 export class PermissionController extends Controller {
   @Get("my-requests")
   public async getMyRequests(
     @Query() userId: number
-  ): Promise<PermissionRequest[]> {
-    return await PermissionRequest.findAll({
+  ): Promise<PermissionRequestDTO[]> {
+    const requests = await PermissionRequest.findAll({
       where: { userId },
       order: [["date", "DESC"]],
     });
+
+    return requests.map((r) => ({
+      id: r.id,
+      userId: r.userId,
+      type: r.type,
+      date: r.date,
+      reason: r.reason,
+      status: r.status,
+      adminRemarks: r.adminRemarks,
+    }));
   }
 
   @Post("apply")
   @SuccessResponse("201", "Applied")
   public async apply(
     @Body() body: CreatePermissionParams
-  ): Promise<PermissionRequest> {
+  ): Promise<PermissionRequestDTO> {
     // Check for duplicates
     const existing = await PermissionRequest.findOne({
       where: {
@@ -54,11 +75,23 @@ export class PermissionController extends Controller {
       throw new Error("A request for this date and type already exists.");
     }
 
-    return await PermissionRequest.create(body as any);
+    const created = await PermissionRequest.create(body as any);
+
+    return {
+      id: created.id,
+      userId: created.userId,
+      type: created.type,
+      date: created.date,
+      reason: created.reason,
+      status: created.status,
+      adminRemarks: created.adminRemarks,
+    };
   }
 
   @Get("all")
-  public async getAllRequests(@Query() status?: string): Promise<any[]> {
+  public async getAllRequests(
+    @Query() status?: string
+  ): Promise<PermissionRequestDTO[]> {
     const where: any = {};
     if (status && status !== "All") {
       where.status = status;
@@ -93,8 +126,11 @@ export class PermissionController extends Controller {
   public async updateStatus(
     @Path() id: number,
     @Body() body: UpdateStatusParams
-  ): Promise<PermissionRequest> {
-    const request = await PermissionRequest.findByPk(id);
+  ): Promise<PermissionRequestDTO> {
+    const request = await PermissionRequest.findByPk(id, {
+      include: [{ model: User, as: "user", attributes: ["name"] }],
+    });
+
     if (!request) {
       throw new Error("Request not found");
     }
@@ -103,6 +139,15 @@ export class PermissionController extends Controller {
     request.adminRemarks = body.remarks || null;
     await request.save();
 
-    return request;
+    return {
+      id: request.id,
+      userId: request.userId,
+      userName: (request as any).user?.name,
+      type: request.type,
+      date: request.date,
+      reason: request.reason,
+      status: request.status,
+      adminRemarks: request.adminRemarks,
+    };
   }
 }
