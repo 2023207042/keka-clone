@@ -1,9 +1,23 @@
 @layer base {
   /* Dark Theme Overrides */
   [data-theme="dark"] {
-    --bg-app: #0f172a;
-    --bg-card: #1e293b;
-    --color-surface-0: #1e293b;
+    /* Primary Backgrounds */
+    --bg-app: #0f172a; /* slate-900 */
+    --bg-card: #1e293b; /* slate-800 */
+
+    /* Inverted Surface Scale */
+    --color-surface-0: #020617; /* slate-950 */
+    --color-surface-50: #0f172a; /* slate-900 */
+    --color-surface-100: #1e293b; /* slate-800 */
+    --color-surface-200: #334155; /* slate-700 */
+    --color-surface-300: #475569; /* slate-600 */
+    --color-surface-400: #64748b; /* slate-500 */
+    --color-surface-500: #94a3b8; /* slate-400 */
+    --color-surface-600: #cbd5e1; /* slate-300 */
+    --color-surface-700: #e2e8f0; /* slate-200 */
+    --color-surface-800: #f1f5f9; /* slate-100 */
+    --color-surface-900: #f8fafc; /* slate-50 */
+    --color-surface-950: #ffffff; /* white */
 
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
@@ -11,8 +25,6 @@
 
     --border-default: #334155;
     --border-active: #60a5fa;
-
-    /* Adjust specific surface colors if needed here */
   }
 
   /* Auto-detect OS preference */
@@ -20,6 +32,19 @@
     :root:not([data-theme="light"]) {
       --bg-app: #0f172a;
       --bg-card: #1e293b;
+
+      --color-surface-0: #020617;
+      --color-surface-50: #0f172a;
+      --color-surface-100: #1e293b;
+      --color-surface-200: #334155;
+      --color-surface-300: #475569;
+      --color-surface-400: #64748b;
+      --color-surface-500: #94a3b8;
+      --color-surface-600: #cbd5e1;
+      --color-surface-700: #e2e8f0;
+      --color-surface-800: #f1f5f9;
+      --color-surface-900: #f8fafc;
+      --color-surface-950: #ffffff;
 
       --text-primary: #f8fafc;
       --text-secondary: #94a3b8;
