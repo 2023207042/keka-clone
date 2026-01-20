@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { format, parse } from "date-fns";
 import { RNCard } from "@/components/RNCard";
 import { RNButton } from "@/components/RNButton";
 import { RNTable } from "@/components/RNTable";
@@ -71,11 +72,12 @@ function LeaveApprovals() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    try {
+      if (!dateString) return "-";
+      return format(parse(dateString, "yyyy-MM-dd", new Date()), "dd MMM yyyy");
+    } catch (e) {
+      return dateString;
+    }
   };
 
   const columns = [
@@ -101,8 +103,8 @@ function LeaveApprovals() {
             row.status === "Approved"
               ? "success"
               : row.status === "Rejected"
-              ? "destructive"
-              : "warning"
+                ? "destructive"
+                : "warning"
           }
         >
           {row.status}

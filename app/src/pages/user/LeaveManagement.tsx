@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { format, parse } from "date-fns";
 import { RNCard } from "@/components/RNCard";
 import { RNButton } from "@/components/RNButton";
 import { RNSelect } from "@/components/RNSelect";
@@ -73,8 +74,8 @@ function LeaveManagementPage() {
       await api.post("/leave/apply", {
         userId: user.id,
         type,
-        startDate: startDate.toISOString().split("T")[0],
-        endDate: endDate.toISOString().split("T")[0],
+        startDate: format(startDate, "yyyy-MM-dd"),
+        endDate: format(endDate, "yyyy-MM-dd"),
         reason,
       });
       setMsg({ type: "success", text: "Leave applied successfully" });
@@ -94,11 +95,14 @@ function LeaveManagementPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    try {
+      if (!dateString) return "-";
+      // Parse the 'yyyy-MM-dd' string as a local date (midnight)
+      const date = parse(dateString, "yyyy-MM-dd", new Date());
+      return format(date, "dd MMM yyyy");
+    } catch (e) {
+      return dateString;
+    }
   };
 
   const columns = [
@@ -122,8 +126,8 @@ function LeaveManagementPage() {
             row.status === "Approved"
               ? "success"
               : row.status === "Rejected"
-              ? "destructive"
-              : "warning"
+                ? "destructive"
+                : "warning"
           }
         >
           {row.status}
@@ -182,8 +186,8 @@ function LeaveManagementPage() {
                       leave.status === "Approved"
                         ? "success"
                         : leave.status === "Rejected"
-                        ? "destructive"
-                        : "warning"
+                          ? "destructive"
+                          : "warning"
                     }
                   >
                     {leave.status}
