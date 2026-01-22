@@ -7,7 +7,9 @@
     "tsoa:spec": "tsoa spec",
     "tsoa:routes": "tsoa routes",
     "build": "tsoa spec && tsoa routes",
-    "start": "ts-node src/server.ts",
+    "build:prod": "tsoa spec && tsoa routes && tsc",
+    "start": "tsoa routes && ts-node src/server.ts",
+    "start:prod": "node build/src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -6,6 +6,11 @@ A production-ready, highly scalable React component library boilerplate built wi
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8)
 
+## � Environments
+
+- **Development**: `npm run dev` (Loads `.env.development`)
+- **Production Build**: `npm run build` (Loads `.env.production`)
+
 ## 🚀 Features
 
 - **Headless Architecture**: Logic and styling separated using `cva` and `radix-ui` patterns.

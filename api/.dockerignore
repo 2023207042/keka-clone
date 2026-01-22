@@ -1,4 +1,14 @@
 node_modules
-build
-
 .git
+.gitignore
+.env
+.env.development
+.env.test
+!.env.production
+build
+dist
+coverage
+npm-debug.log
+Dockerfile
+docker-compose.yml
+README.md
