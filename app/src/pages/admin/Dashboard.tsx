@@ -130,9 +130,10 @@ function AdminDashboard() {
   const formatTime = (dateString?: string | null) => {
     if (!dateString) return "--:--";
     try {
-      return new Date(dateString).toLocaleTimeString([], {
-        hour: "2-digit",
+      return new Date(dateString).toLocaleTimeString("en-US", {
+        hour: "numeric",
         minute: "2-digit",
+        hour12: true,
       });
     } catch (e) {
       console.error("Date parsing error", e);

@@ -30,10 +30,18 @@ Attendance.init(
     clockIn: {
       type: DataTypes.DATE,
       allowNull: false,
+      get() {
+        const rawValue = this.getDataValue('clockIn');
+        return rawValue; // Sequelize will serialize to ISO string in JSON
+      }
     },
     clockOut: {
       type: DataTypes.DATE,
       allowNull: true,
+      get() {
+        const rawValue = this.getDataValue('clockOut');
+        return rawValue; // Sequelize will serialize to ISO string in JSON
+      }
     },
     duration: {
       type: DataTypes.INTEGER,

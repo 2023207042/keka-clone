@@ -55,14 +55,44 @@ function ConsolidatedAttendance() {
       const headers = ['Date', 'Day', 'Status', 'In', 'Out', 'Duration'];
       const csvContent = [
           headers.join(','),
-          ...report.map((row: any) => [
-              row.date,
-              row.day,
-              row.status,
-              row.clockIn,
-              row.clockOut,
-              row.duration
-          ].join(','))
+          ...report.map((row: any) => {
+              // Format times for CSV
+              let clockInFormatted = row.clockIn;
+              let clockOutFormatted = row.clockOut;
+              
+              if (row.clockIn && row.clockIn !== '-') {
+                  try {
+                      clockInFormatted = new Date(row.clockIn).toLocaleTimeString('en-US', {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true
+                      });
+                  } catch {
+                      clockInFormatted = row.clockIn;
+                  }
+              }
+              
+              if (row.clockOut && row.clockOut !== '-') {
+                  try {
+                      clockOutFormatted = new Date(row.clockOut).toLocaleTimeString('en-US', {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true
+                      });
+                  } catch {
+                      clockOutFormatted = row.clockOut;
+                  }
+              }
+              
+              return [
+                  row.date,
+                  row.day,
+                  row.status,
+                  clockInFormatted,
+                  clockOutFormatted,
+                  row.duration
+              ].join(',');
+          })
       ].join('\n');
 
       const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -85,8 +115,32 @@ function ConsolidatedAttendance() {
         
         return <RNBadge variant={variant}>{row.status}</RNBadge>;
     }},
-    { header: 'In', accessorKey: 'clockIn', cell: (row: any) => <span className="text-xs">{row.clockIn}</span> },
-    { header: 'Out', accessorKey: 'clockOut', cell: (row: any) => <span className="text-xs">{row.clockOut}</span> },
+    { header: 'In', accessorKey: 'clockIn', cell: (row: any) => {
+        if (!row.clockIn || row.clockIn === '-') return <span className="text-xs">-</span>;
+        try {
+            const time = new Date(row.clockIn).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+            return <span className="text-xs">{time}</span>;
+        } catch {
+            return <span className="text-xs">{row.clockIn}</span>;
+        }
+    }},
+    { header: 'Out', accessorKey: 'clockOut', cell: (row: any) => {
+        if (!row.clockOut || row.clockOut === '-') return <span className="text-xs">-</span>;
+        try {
+            const time = new Date(row.clockOut).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+            return <span className="text-xs">{time}</span>;
+        } catch {
+            return <span className="text-xs">{row.clockOut}</span>;
+        }
+    }},
     { header: 'Duration', accessorKey: 'duration', cell: (row: any) => <span className="font-medium">{row.duration}</span> },
   ];
 

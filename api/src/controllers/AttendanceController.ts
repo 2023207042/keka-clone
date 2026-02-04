@@ -14,6 +14,13 @@ import { Op } from "sequelize";
 import { emailService } from "../services/EmailService";
 import { toZonedTime, format } from "date-fns-tz";
 
+// Helper function to get current date in IST timezone (YYYY-MM-DD format)
+const getTodayIST = (): string => {
+  const now = new Date();
+  const istDate = toZonedTime(now, "Asia/Kolkata");
+  return format(istDate, "yyyy-MM-dd", { timeZone: "Asia/Kolkata" });
+};
+
 interface ClockInParams {
   userId: number;
   workFrom?: "Office" | "Home";
@@ -56,7 +63,7 @@ interface DashboardStats {
 export class AttendanceController extends Controller {
   @Get("stats")
   public async getDashboardStats(): Promise<DashboardStats> {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayIST();
 
     // 1. Total Employees (Active or Invited)
     const totalEmployees = await User.count({
@@ -100,7 +107,7 @@ export class AttendanceController extends Controller {
   public async clockIn(
     @Body() body: ClockInParams
   ): Promise<AttendanceResponse> {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayIST();
 
     // Check if there is an OPEN session (clockOut is null) for today
     const openSession = await Attendance.findOne({
@@ -178,7 +185,7 @@ export class AttendanceController extends Controller {
   public async clockOut(
     @Body() body: ClockOutParams
   ): Promise<AttendanceResponse> {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayIST();
 
     // Find the latest OPEN session
     const attendance = await Attendance.findOne({
@@ -252,7 +259,7 @@ export class AttendanceController extends Controller {
   public async getTodayStatus(
     @Query() userId: number
   ): Promise<AttendanceResponse | null> {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayIST();
 
     const sessions = await Attendance.findAll({
       where: {
@@ -314,7 +321,7 @@ export class AttendanceController extends Controller {
 
     // Map to daily summary
     const history: DailySummary[] = dates.map((date) => {
-      const dateStr = date.toLocaleDateString("en-CA"); // YYYY-MM-DD
+      const dateStr = format(date, "yyyy-MM-dd"); // YYYY-MM-DD
 
       // Find logs for this specific date (ignoring time component match issues by using string/date comparison logic if needed, but here simple filter)
       // Note: Sequelize dateOnly is string in JS sometimes, check 'logs' structure if needed.
@@ -437,8 +444,8 @@ export class AttendanceController extends Controller {
         userId,
         date: {
           [Op.between]: [
-            startDate.toLocaleDateString("en-CA"),
-            endDate.toLocaleDateString("en-CA"),
+            format(startDate, "yyyy-MM-dd"),
+            format(endDate, "yyyy-MM-dd"),
           ],
         },
       },
@@ -452,15 +459,15 @@ export class AttendanceController extends Controller {
       where: {
         userId,
         status: "Approved",
-        startDate: { [Op.lte]: endDate.toLocaleDateString("en-CA") },
-        endDate: { [Op.gte]: startDate.toLocaleDateString("en-CA") },
+        startDate: { [Op.lte]: format(endDate, "yyyy-MM-dd") },
+        endDate: { [Op.gte]: format(startDate, "yyyy-MM-dd") },
       },
     });
 
     console.log(`Found ${leaves.length} approved leaves.`);
 
     const report: any[] = [];
-    const todayStr = new Date().toLocaleDateString("en-CA");
+    const todayStr = getTodayIST();
 
     // Loop through every day of the month
     for (
@@ -468,13 +475,13 @@ export class AttendanceController extends Controller {
       d <= endDate;
       d.setDate(d.getDate() + 1)
     ) {
-      const dateStr = d.toLocaleDateString("en-CA"); // YYYY-MM-DD
-      const dayName = d.toLocaleDateString("en-US", { weekday: "long" });
+      const dateStr = format(d, "yyyy-MM-dd"); // YYYY-MM-DD
+      const dayName = format(d, "EEEE"); // Day name
 
       // 1. Check for Attendance (Priority)
       const dailyAtt = attendanceRecords.filter((a) => {
         // Robust comparison: Convert both to YYYY-MM-DD string
-        const recordDate = new Date(a.date).toLocaleDateString("en-CA");
+        const recordDate = format(new Date(a.date), "yyyy-MM-dd");
         return recordDate === dateStr;
       });
 
@@ -492,6 +499,14 @@ export class AttendanceController extends Controller {
         const m = totalDuration % 60;
         const durStr = `${h}h ${m}m`;
 
+        // Return ISO strings so frontend can format them consistently
+        const clockInISO = firstIn instanceof Date 
+          ? firstIn.toISOString() 
+          : new Date(firstIn).toISOString();
+        const clockOutISO = lastOut 
+          ? (lastOut instanceof Date ? lastOut.toISOString() : new Date(lastOut).toISOString())
+          : null;
+
         report.push({
           date: dateStr,
           day: dayName,
@@ -499,8 +514,8 @@ export class AttendanceController extends Controller {
             ? "Present (Running)"
             : "Present",
           duration: durStr,
-          clockIn: new Date(firstIn).toLocaleTimeString(),
-          clockOut: lastOut ? new Date(lastOut).toLocaleTimeString() : "-",
+          clockIn: clockInISO,
+          clockOut: clockOutISO || "-",
         });
         continue;
       }
@@ -565,7 +580,7 @@ export class AttendanceController extends Controller {
 
   @Get("today-summary")
   public async getTodaySummary(): Promise<any[]> {
-    const today = new Date().toLocaleDateString("en-CA");
+    const today = getTodayIST();
 
     // 1. Fetch ALL users
     const users = await User.findAll({

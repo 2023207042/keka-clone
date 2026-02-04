@@ -106,9 +106,9 @@ function AttendanceReport() {
                 row.userId,
                 `"${row.userName || ''}"`,
                 `"${row.userEmail || ''}"`,
-                new Date(row.date).toLocaleDateString(),
-                new Date(row.clockIn).toLocaleTimeString(),
-                row.clockOut ? new Date(row.clockOut).toLocaleTimeString() : '-',
+                new Date(row.date).toLocaleDateString('en-US'),
+                new Date(row.clockIn).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+                row.clockOut ? new Date(row.clockOut).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '-',
                 durStr,
                 row.status,
                 row.workFrom
@@ -127,7 +127,7 @@ function AttendanceReport() {
   const columns = [
     { header: 'Name', accessorKey: 'userName' },
     { header: 'Email', accessorKey: 'userEmail', cell: (row: any) => <span className="text-xs text-[var(--text-secondary)]">{row.userEmail}</span> },
-    { header: 'Date', accessorKey: 'date', cell: (row: any) => new Date(row.date).toLocaleDateString() },
+    { header: 'Date', accessorKey: 'date', cell: (row: any) => new Date(row.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' }) },
     { header: 'In', accessorKey: 'clockIn', cell: (row: any) => new Date(row.clockIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) },
     { header: 'Out', accessorKey: 'clockOut', cell: (row: any) => row.clockOut ? new Date(row.clockOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-' },
     { header: 'Duration', accessorKey: 'duration', cell: (row: any) => formatDuration(row) },

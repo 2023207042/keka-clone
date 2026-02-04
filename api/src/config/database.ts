@@ -18,6 +18,10 @@ export const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
   port: dbPort,
   dialect: "mysql",
   logging: false, // Set to console.log to see SQL queries
+  timezone: "+00:00", // Store all timestamps in UTC
+  dialectOptions: {
+    timezone: "+00:00", // Ensure MySQL connection uses UTC
+  },
   pool: {
     max: 5,
     min: 0,

@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { Attendance } from "../models/Attendance";
 import { Op } from "sequelize";
+import { toZonedTime, format } from "date-fns-tz";
 
 export const initCronJobs = () => {
   // Run every day at midnight (00:00) IST
@@ -10,9 +11,9 @@ export const initCronJobs = () => {
       console.log("Running Midnight Auto-Clockout Job (IST)...");
 
       // Get "Today" in IST (YYYY-MM-DD)
-      const todayIST = new Date().toLocaleDateString("en-CA", {
-        timeZone: "Asia/Kolkata",
-      });
+      const now = new Date();
+      const istDate = toZonedTime(now, "Asia/Kolkata");
+      const todayIST = format(istDate, "yyyy-MM-dd", { timeZone: "Asia/Kolkata" });
 
       try {
         // Find all sessions that are still OPEN (clockOut is null)
