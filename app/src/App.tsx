@@ -15,6 +15,12 @@ import PermissionRequestPage from '@/pages/user/PermissionRequest';
 import PermissionApprovals from '@/pages/admin/PermissionApprovals';
 import { authService } from '@/services/auth';
 import type { ReactNode } from 'react';
+import CompanyHierarchy from '@/pages/CompanyHierarchy';
+
+
+
+
+
 
 // Simple Auth Guard
 const ProtectedRoute = ({ children, role }: { children: ReactNode, role?: 'admin' | 'employee' }) => {
@@ -126,23 +132,26 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        
+        <Route
+      path="/company-hierarchy"
+      element={
+        <ProtectedRoute role="admin">
+          <CompanyHierarchy />
+        </ProtectedRoute>
+          }
+        />     
         {/* Default Redirect */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         
         {/* Catch all - 404 */}
         <Route path="*" element={<div className="p-8 text-center text-xl">404 - Page Not Found</div>} />
-      </Routes>
-    </BrowserRouter>
-    import CompanyHierarchy from "./CompanyHierarchy";
 
-function App() {
-  return (
-    <div>
-      <CompanyHierarchy />
-    </div>
+        {/*DefaultRedirect for root*/}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+   </Routes>
+</BrowserRouter>
   );
-}
 }
 
 export default App;

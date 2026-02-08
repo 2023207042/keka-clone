@@ -1,4 +1,3 @@
-import React from "react";
 
 // Sample Org Data
 type Person = {
