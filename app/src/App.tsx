@@ -134,7 +134,15 @@ function App() {
         <Route path="*" element={<div className="p-8 text-center text-xl">404 - Page Not Found</div>} />
       </Routes>
     </BrowserRouter>
+    import CompanyHierarchy from "./CompanyHierarchy";
+
+function App() {
+  return (
+    <div>
+      <CompanyHierarchy />
+    </div>
   );
+}
 }
 
 export default App;
